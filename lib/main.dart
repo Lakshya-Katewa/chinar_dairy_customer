@@ -1,23 +1,183 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:chinar_dairy/screen/onboarding_screen.dart';
-import 'package:chinar_dairy/screen/login_screen.dart';
-import 'package:chinar_dairy/screen/zone_selection.dart';
-import 'package:chinar_dairy/screen/home_Screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'providers/auth_provider.dart';
+import 'providers/cart_provider.dart';
+import 'providers/product_provider.dart';
+import 'providers/subscription_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'providers/order_provider.dart';
+import 'providers/address_provider.dart';
+import 'providers/referal_provider.dart';
+
+import 'screens/splash_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/otp_screen.dart';
+import 'screens/zone_selection_screen.dart';
+import 'screens/main_screen.dart';
+import 'screens/product_detail_screen.dart';
+import 'screens/subscription_screen.dart';
+import 'screens/address_selection_screen.dart';
+import 'screens/address_management.dart';
+import 'screens/cart_screen.dart';
+import 'screens/payment_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/referal_screen.dart';
+import 'screens/wallet_screen.dart';
+import 'screens/invoices_screen.dart';
+
 import 'utils/theme.dart';
-import 'package:chinar_dairy/provider/auth_provider.dart';
-import 'package:chinar_dairy/provider/cart_provider.dart';
-import 'package:chinar_dairy/provider/product_provider.dart';
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+
+// --- SETUP FOR LOCAL NOTIFICATIONS ---
+// 1. Create an instance of the plugin
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+// 2. Define the notification channel for Android
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel', // A unique ID for the channel
+  'High Importance Notifications', // A user-visible name for the channel
+  description: 'This channel is used for important notifications.', // A user-visible description
+  importance: Importance.max,
+);
+
+// --- BACKGROUND MESSAGE HANDLER ---
+// This must be a top-level function (not inside a class).
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase if it's not already.
   await Firebase.initializeApp();
-  runApp(const MyApp());
+  debugPrint("Handling a background message: ${message.messageId}");
+
+  // Extract notification details from the message.
+  RemoteNotification? notification = message.notification;
+  AndroidNotification? android = message.notification?.android;
+
+  // If the message contains a notification payload, show it using the local notifications plugin.
+  if (notification != null && android != null) {
+    flutterLocalNotificationsPlugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel.id,
+          channel.name,
+          channelDescription: channel.description,
+          icon: '@mipmap/ic_launcher', // Ensure you have this icon
+        ),
+      ),
+    );
+  }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// --- NOTIFICATION PERMISSION & TOKEN HANDLER ---
+Future<void> initializeNotificationsAndSaveToken(String customerId) async {
+  if (customerId.isEmpty) return;
+
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Request permission from the user.
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+    provisional: false,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    debugPrint('Notification permission granted.');
+    String? fcmToken = await messaging.getToken();
+    if (fcmToken != null) {
+      debugPrint('FCM Token: $fcmToken');
+      // Save the token to Firestore.
+      try {
+        await FirebaseFirestore.instance
+            .collection('customers')
+            .doc(customerId)
+            .set({'fcmToken': fcmToken}, SetOptions(merge: true));
+        debugPrint('FCM token saved successfully for customer: $customerId');
+      } catch (e) {
+        debugPrint('Error saving FCM token: $e');
+      }
+    }
+  } else {
+    debugPrint('User declined or has not accepted notification permission');
+  }
+}
+
+void main() async {
+  // Ensure Flutter is ready.
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize Firebase.
+  await Firebase.initializeApp();
+
+  // Set the background messaging handler.
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // --- INITIALIZE LOCAL NOTIFICATIONS PLUGIN ---
+  // 3. Create the notification channel on the device (for Android 8.0+).
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+  
+  // 4. Initialize the plugin with settings for Android and iOS.
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  // --- LISTEN FOR FOREGROUND MESSAGES ---
+  // This listener handles messages that arrive while the app is open.
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    debugPrint("Handling a foreground message: ${message.messageId}");
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    // Display the notification using the local notifications plugin.
+    if (notification != null && android != null) {
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            icon: '@mipmap/ic_launcher',
+          ),
+        ),
+      );
+    }
+  });
+
+  // Activate Firebase App Check.
+  if (kDebugMode) {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.debug,
+      appleProvider: AppleProvider.debug,
+    );
+  } else {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity,
+      appleProvider: AppleProvider.appAttest,
+    );
+  }
+  
+  // Run the app.
+  runApp(const ChinaarDairyApp());
+}
+
+class ChinaarDairyApp extends StatelessWidget {
+  const ChinaarDairyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,121 +186,46 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => WalletProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => ReferralProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()),
       ],
       child: MaterialApp(
-        title: 'CHINAR Dairy',
-        debugShowCheckedModeBanner: false,
+        title: 'Chinar Dairy',
         theme: AppTheme.lightTheme,
-        home: const SplashScreen(),
-      ),
-    );
-  }
-}
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _checkInitialRoute();
-  }
-
-  Future<void> _checkInitialRoute() async {
-    await Future.delayed(const Duration(seconds: 2));
-    
-    final prefs = await SharedPreferences.getInstance();
-    final isFirstTime = prefs.getBool('isFirstTime') ?? true;
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    final hasSelectedZone = prefs.getBool('hasSelectedZone') ?? false;
-
-    if (!mounted) return;
-
-    if (isFirstTime) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
-    } else if (!isLoggedIn) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    } else if (!hasSelectedZone) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const ZoneSelectionScreen()),
-      );
-    } else {
-      final userId = prefs.getString('userId');
-      final areaCode = prefs.getString('selectedAreaCode');
-      if (userId != null && areaCode != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(userId: userId, areaCode: areaCode),
-          ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              height: 120,
-              width: 120,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(),
+          '/login': (context) => const LoginScreen(),
+          '/otp': (context) => const OTPScreen(),
+          '/zone-selection': (context) => const ZoneSelectionScreen(),
+          '/main': (context) => const MainScreen(),
+          '/product-detail': (context) => const ProductDetailScreen(),
+          '/subscription': (context) => const SubscriptionScreen(),
+          '/address-selection': (context) => const AddressSelectionScreen(),
+          '/address-management': (context) => const AddressManagementScreen(),
+          '/cart': (context) => const CartScreen(),
+          '/profile': (context) => const ProfileScreen(),
+          '/referral': (context) => const ReferralScreen(),
+          '/wallet': (context) => const WalletScreen(),
+          '/invoices': (context) => const InvoicesScreen(), 
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/payment') {
+            final args = settings.arguments as Map<String, dynamic>;
+            return MaterialPageRoute(
+              builder: (context) => PaymentScreen(
+                totalAmount: args['totalAmount'],
+                paymentType: args['paymentType'],
+                orderData: args['orderData'],
               ),
-              child: const Center(
-                child: Text(
-                  'CHINAR',
-                  style: TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'CHINAR Dairy',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Fresh Dairy Products',
-              style: TextStyle(
-                color: AppTheme.lightTextColor,
-              ),
-            ),
-            const SizedBox(height: 40),
-            const CircularProgressIndicator(
-              color: AppTheme.primaryColor,
-            ),
-          ],
-        ),
+            );
+          }
+          return null;
+        },
       ),
     );
   }

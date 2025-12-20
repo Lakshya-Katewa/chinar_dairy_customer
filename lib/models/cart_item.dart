@@ -1,59 +1,57 @@
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CartItem {
   final String id;
   final String customerId;
   final String productId;
   final String productName;
-  final double price;
   final double quantity;
+  final double price;
   final String unit;
   final DateTime? orderDate;
-  final DateTime createdAt;
+  final String? imageUrl;
 
   CartItem({
     required this.id,
     required this.customerId,
     required this.productId,
     required this.productName,
-    required this.price,
     required this.quantity,
+    required this.price,
     required this.unit,
     this.orderDate,
-    required this.createdAt,
+    this.imageUrl,
   });
 
-  factory CartItem.fromFirestore(firestore.DocumentSnapshot doc) {
+  double get totalPrice => price * quantity;
+
+  factory CartItem.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return CartItem(
       id: doc.id,
       customerId: data['customerId'] ?? '',
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
-      price: (data['price'] ?? 0).toDouble(),
-      quantity: (data['quantity'] ?? 0).toDouble(),
+      quantity: (data['quantity'] ?? 0.0).toDouble(),
+      price: (data['price'] ?? 0.0).toDouble(),
       unit: data['unit'] ?? '',
-      orderDate: data['orderDate'] != null
-          ? (data['orderDate'] as firestore.Timestamp).toDate()
+      orderDate: data['orderDate'] != null 
+          ? (data['orderDate'] as Timestamp).toDate() 
           : null,
-      createdAt: (data['createdAt'] as firestore.Timestamp).toDate(),
+      imageUrl: data['imageUrl'],
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       'customerId': customerId,
       'productId': productId,
       'productName': productName,
-      'price': price,
       'quantity': quantity,
+      'price': price,
       'unit': unit,
-      'orderDate': orderDate != null
-          ? firestore.Timestamp.fromDate(orderDate!)
-          : null,
-      'createdAt': firestore.Timestamp.fromDate(createdAt),
+      'orderDate': orderDate != null ? Timestamp.fromDate(orderDate!) : null,
+      'imageUrl': imageUrl,
     };
   }
-
-  double get totalPrice => price * quantity;
 }

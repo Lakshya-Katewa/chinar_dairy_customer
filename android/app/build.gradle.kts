@@ -1,44 +1,97 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val keystoreProperties = Properties().apply {
+    val propertiesFile = rootProject.file("app/key.properties")
+    if (propertiesFile.exists()) {
+        load(FileInputStream(propertiesFile))
+    }
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
+    id("com.google.devtools.ksp") version "1.9.22-1.0.17"
 }
 
 android {
-    namespace = "com.example.chinar_dairy"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
+    namespace = "com.chinardairy.app"
+    compileSdk = flutter.compileSdkVersion.toInt()
+    ndkVersion = "27.0.12077973"
+    buildFeatures {
+        buildConfig = true
+    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        
+        // 1. ADD THIS LINE TO ENABLE DESUGARING
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.chinar_dairy"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        applicationId = "com.chinardairy.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        targetSdk = flutter.targetSdkVersion.toInt()
+        versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
+        multiDexEnabled = true
+        
+        // Corrected resource value declaration
+        resValue("string", "firebase_web_client_id", "AIzaSyC2jP3jMdHGjeSm4E0L9M62Zp5DpK6TvWg")
+        
+        manifestPlaceholders += mapOf(
+            "firebaseAppCheckDebug" to "debug",
+            "firebaseAppCheck" to "playIntegrity"
+        )
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProperties.getProperty("storeFile") ?: "null")
+            storePassword = keystoreProperties.getProperty("storePassword") ?: ""
+            keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
+            keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
         }
     }
+    
+    buildTypes {
+        getByName("debug") {
+            manifestPlaceholders += mapOf("firebaseAppCheck" to "debug")
+        }
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+}
+
+dependencies {
+    // 2. UPDATED DEPENDENCY FOR DESUGARING AS PER ERROR LOG
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    implementation("com.google.android.play:integrity:1.4.0")
+    implementation("com.google.android.gms:play-services-safetynet:18.0.1")
+    implementation("com.google.firebase:firebase-appcheck-playintegrity:17.1.2")
+    implementation("com.google.firebase:firebase-appcheck-ktx:17.1.2")
+    implementation("com.google.firebase:firebase-common-ktx:21.0.0")
+    implementation("com.google.firebase:firebase-appcheck-debug:17.1.2")
+    
+    // ... other dependencies
 }
 
 flutter {
     source = "../.."
 }
+

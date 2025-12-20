@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum SubscriptionType { monthly, weekly, alternateDay }
+enum SubscriptionStatus { active, paused, cancelled, expired }
 
 class Subscription {
   final String id;
@@ -16,8 +17,12 @@ class Subscription {
   final bool isActive;
   final double quantity;
   final double pricePerUnit;
+  final double totalAmount;
   final String areaCode;
   final String address;
+  final SubscriptionStatus status;
+  final String? imageUrl;
+  final DateTime createdAt;
 
   Subscription({
     required this.id,
@@ -33,11 +38,15 @@ class Subscription {
     required this.isActive,
     required this.quantity,
     required this.pricePerUnit,
+    required this.totalAmount,
     required this.areaCode,
     required this.address,
+    required this.status,
+    this.imageUrl,
+    required this.createdAt,
   });
 
-  factory Subscription.fromFirestore(firestore.DocumentSnapshot doc) {
+  factory Subscription.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Subscription(
       id: doc.id,
@@ -47,20 +56,30 @@ class Subscription {
       customerEmail: data['customerEmail'] ?? '',
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
-      type: SubscriptionType.values[data['type'] ?? 0],
-      startDate: (data['startDate'] as firestore.Timestamp).toDate(),
-      endDate: data['endDate'] != null
-          ? (data['endDate'] as firestore.Timestamp).toDate()
+      type: SubscriptionType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => SubscriptionType.monthly,
+      ),
+      startDate: (data['startDate'] as Timestamp).toDate(),
+      endDate: data['endDate'] != null 
+          ? (data['endDate'] as Timestamp).toDate() 
           : null,
       isActive: data['isActive'] ?? true,
-      quantity: (data['quantity'] ?? 0).toDouble(),
-      pricePerUnit: (data['pricePerUnit'] ?? 0).toDouble(),
+      quantity: (data['quantity'] ?? 0.0).toDouble(),
+      pricePerUnit: (data['pricePerUnit'] ?? 0.0).toDouble(),
+      totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
       areaCode: data['areaCode'] ?? '',
       address: data['address'] ?? '',
+      status: SubscriptionStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => SubscriptionStatus.active,
+      ),
+      imageUrl: data['imageUrl'],
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toMap() {
     return {
       'customerId': customerId,
       'customerName': customerName,
@@ -68,52 +87,18 @@ class Subscription {
       'customerEmail': customerEmail,
       'productId': productId,
       'productName': productName,
-      'type': type.index,
-      'startDate': firestore.Timestamp.fromDate(startDate),
-      'endDate': endDate != null ? firestore.Timestamp.fromDate(endDate!) : null,
+      'type': type.name,
+      'startDate': Timestamp.fromDate(startDate),
+      'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
       'isActive': isActive,
       'quantity': quantity,
       'pricePerUnit': pricePerUnit,
+      'totalAmount': totalAmount,
       'areaCode': areaCode,
       'address': address,
+      'status': status.name,
+      'imageUrl': imageUrl,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
-  }
-
-  String get typeText {
-    switch (type) {
-      case SubscriptionType.monthly:
-        return 'Monthly';
-      case SubscriptionType.weekly:
-        return 'Weekly';
-      case SubscriptionType.alternateDay:
-        return 'Alternate Day';
-    }
-  }
-
-  int get deliveryCount {
-    switch (type) {
-      case SubscriptionType.monthly:
-        return 30;
-      case SubscriptionType.weekly:
-        return 7;
-      case SubscriptionType.alternateDay:
-        return 15;
-    }
-  }
-
-  bool shouldDeliverToday() {
-    final today = DateTime.now();
-    final daysDifference = today.difference(startDate).inDays;
-
-    if (daysDifference < 0 || !isActive) return false;
-
-    switch (type) {
-      case SubscriptionType.monthly:
-        return daysDifference < 30;
-      case SubscriptionType.weekly:
-        return daysDifference < 7;
-      case SubscriptionType.alternateDay:
-        return daysDifference < 30 && daysDifference % 2 == 0;
-    }
   }
 }
