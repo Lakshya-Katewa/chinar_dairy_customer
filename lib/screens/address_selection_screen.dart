@@ -74,8 +74,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         title: const Text('Location Permission Required'),
         content: Text(
           isPermanent
-              ? 'Location permission is permanently denied. Please enable it in app settings to use location features.'
-              : 'This app needs location permission to help you select your delivery address accurately.',
+              ? 'Location permission is permanently denied. Please enable it in app settings to use location features for accurate delivery.'
+              : 'This app needs location permission to help you select your exact delivery address.',
         ),
         actions: [
           TextButton(
@@ -147,7 +147,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Location Services Disabled'),
-        content: const Text('Please enable location services to use this feature.'),
+        content: const Text('Please enable location services so we can deliver accurately to your doorstep.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -218,8 +218,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       instructions: _instructionsController.text.trim().isNotEmpty 
           ? _instructionsController.text.trim() 
           : null,
-      latitude: _selectedLocation.latitude,
-      longitude: _selectedLocation.longitude,
+      latitude: _selectedLocation.latitude, // GPS location explicitly recorded here
+      longitude: _selectedLocation.longitude, // GPS location explicitly recorded here
       fullAddress: _buildFullAddress(),
     );
 
@@ -320,13 +320,20 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                         ),
                       ],
                     ),
-                    child: const Text(
-                      'Tap on the map to select your exact location',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
+                    child: Row(
+                      children: [
+                        Icon(Icons.touch_app, color: Colors.green.shade700),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Tap map to set exact delivery GPS location',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

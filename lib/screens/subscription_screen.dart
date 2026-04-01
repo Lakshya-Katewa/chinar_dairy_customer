@@ -16,7 +16,7 @@ class SubscriptionScreen extends StatefulWidget {
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Product? product;
-  SubscriptionType selectedType = SubscriptionType.monthly;
+  SubscriptionType selectedType = SubscriptionType.monthly; // Defaulting to Monthly, but Trial is now an option
   double quantity = 1.0;
   DetailedAddress? selectedAddress;
 
@@ -25,7 +25,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     super.didChangeDependencies();
     product = ModalRoute.of(context)?.settings.arguments as Product?;
     
-    // Load saved addresses
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final addressProvider = Provider.of<AddressProvider>(context, listen: false);
@@ -49,10 +48,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   String get subscriptionDescription {
     switch (selectedType) {
-      case SubscriptionType.monthly:
-        return 'Daily delivery for 30 days';
+      case SubscriptionType.trial: // FIX FOR ISSUE #11
+        return 'Daily delivery for 3 days (Trial)';
       case SubscriptionType.weekly:
         return 'Daily delivery for 7 days';
+      case SubscriptionType.monthly:
+        return 'Daily delivery for 30 days';
       case SubscriptionType.alternateDay:
         return 'Alternate day delivery for 30 days (15 deliveries)';
     }
@@ -62,7 +63,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final addressProvider = Provider.of<AddressProvider>(context, listen: false);
     
     if (addressProvider.savedAddresses.isEmpty) {
-      // Navigate to add new address
       final result = await Navigator.pushNamed(context, '/address-selection');
       if (result != null && result is DetailedAddress) {
         setState(() {
@@ -70,7 +70,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         });
       }
     } else {
-      // Show address selection dialog
       _showAddressSelectionDialog();
     }
   }
@@ -87,7 +86,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Saved addresses
               ...addressProvider.savedAddresses.map((savedAddress) {
                 return ListTile(
                   leading: const Icon(Icons.location_on),
@@ -107,7 +105,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               
               const Divider(),
               
-              // Add new address option
               ListTile(
                 leading: const Icon(Icons.add_location),
                 title: const Text('Add New Address'),
@@ -152,7 +149,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
     if (authProvider.customer == null) return;
 
-    // Check wallet balance
     final totalAmount = calculatedAmount;
     if (authProvider.customer!.walletBalance < totalAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -326,10 +322,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               Card(
                 child: Column(
                   children: [
+                    // FIX FOR ISSUE #11: Insert Trial Pack option at the top of the list
                     RadioListTile<SubscriptionType>(
-                      title: const Text('Monthly Subscription'),
-                      subtitle: const Text('Daily delivery for 30 days'),
-                      value: SubscriptionType.monthly,
+                      title: const Text('3-Day Trial Pack', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Daily delivery for 3 days to test our service'),
+                      value: SubscriptionType.trial,
                       groupValue: selectedType,
                       onChanged: (value) {
                         setState(() {
@@ -344,6 +341,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       title: const Text('Weekly Subscription'),
                       subtitle: const Text('Daily delivery for 7 days'),
                       value: SubscriptionType.weekly,
+                      groupValue: selectedType,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedType = value!;
+                        });
+                      },
+                      activeColor: Colors.green.shade700,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    const Divider(height: 1),
+                    RadioListTile<SubscriptionType>(
+                      title: const Text('Monthly Subscription'),
+                      subtitle: const Text('Daily delivery for 30 days'),
+                      value: SubscriptionType.monthly,
                       groupValue: selectedType,
                       onChanged: (value) {
                         setState(() {
@@ -576,7 +587,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ),
               ),
               
-              // Add bottom padding for safe area
               const SizedBox(height: 16),
             ],
           ),

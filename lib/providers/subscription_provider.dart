@@ -19,7 +19,6 @@ class SubscriptionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Listen to real-time subscription updates
       _firestore
           .collection('subscriptions')
           .where('customerId', isEqualTo: customerId)
@@ -46,26 +45,31 @@ class SubscriptionProvider with ChangeNotifier {
   }) {
     final dailyAmount = product.price * quantity;
 
+    // FIX FOR ISSUE #11: Added pricing for Trial pack (3 days)
     switch (type) {
-      case SubscriptionType.monthly:
-        return dailyAmount * 30;
+      case SubscriptionType.trial:
+        return dailyAmount * 3;
       case SubscriptionType.weekly:
         return dailyAmount * 7;
+      case SubscriptionType.monthly:
+        return dailyAmount * 30;
       case SubscriptionType.alternateDay:
         return dailyAmount * 15;
     }
   }
 
-  // --- UPDATED: CORRECTED DURATION LOGIC ---
-  // This fixes the 8-day delivery for a 7-day payment issue.
- DateTime calculateEndDate(SubscriptionType type, DateTime startDate) {
+  DateTime calculateEndDate(SubscriptionType type, DateTime startDate) {
+    // FIX FOR ISSUE #11: Added end date calculation for Trial pack
     switch (type) {
-      case SubscriptionType.monthly:
-        // A 30-day period (inclusive) ends 29 days after the start date.
-        return startDate.add(const Duration(days: 29));
+      case SubscriptionType.trial:
+        // A 3-day period (inclusive) ends 2 days after the start date.
+        return startDate.add(const Duration(days: 2));
       case SubscriptionType.weekly:
         // A 7-day period (inclusive) ends 6 days after the start date.
         return startDate.add(const Duration(days: 6));
+      case SubscriptionType.monthly:
+        // A 30-day period (inclusive) ends 29 days after the start date.
+        return startDate.add(const Duration(days: 29));
       case SubscriptionType.alternateDay:
         // 15 deliveries over a period of 30 days (inclusive).
         return startDate.add(const Duration(days: 29));
@@ -89,11 +93,8 @@ class SubscriptionProvider with ChangeNotifier {
       throw Exception('Insufficient wallet balance. Add ₹${totalAmount - customer.walletBalance} to continue.');
     }
 
-    // --- UPDATED: SUBSCRIPTION ALWAYS STARTS FROM THE NEXT DAY ---
     final now = DateTime.now();
-    // This gets today's date with time set to 00:00:00
     final todayAtMidnight = DateTime(now.year, now.month, now.day);
-    // This sets the start date to tomorrow at 00:00:00
     final startDate = todayAtMidnight.add(const Duration(days: 1));
 
     final subscription = Subscription(
@@ -105,8 +106,8 @@ class SubscriptionProvider with ChangeNotifier {
       productId: product.id,
       productName: product.name,
       type: type,
-      startDate: startDate, // Use the new start date
-      endDate: calculateEndDate(type, startDate), // Use the corrected end date logic
+      startDate: startDate,
+      endDate: calculateEndDate(type, startDate),
       isActive: true,
       quantity: quantity,
       pricePerUnit: product.price,

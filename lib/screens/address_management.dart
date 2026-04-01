@@ -43,7 +43,8 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
   }
 
   Future<void> _showSaveAddressDialog(DetailedAddress address) async {
-    final labelController = TextEditingController();
+    // FIX FOR ISSUE #5 & #8: Use predefined labels and default to 'Home'
+    String selectedLabel = 'Home';
     bool isDefault = false;
 
     final result = await showDialog<bool>(
@@ -53,19 +54,40 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
           title: const Text('Save Address'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: labelController,
-                decoration: const InputDecoration(
-                  labelText: 'Address Label',
-                  hintText: 'e.g., Home, Office, etc.',
-                  border: OutlineInputBorder(),
-                ),
+              const Text(
+                'Save address as:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 8.0,
+                children: ['Home', 'Office', 'Shop', 'Other'].map((label) {
+                  final isSelected = selectedLabel == label;
+                  return ChoiceChip(
+                    label: Text(label),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => selectedLabel = label);
+                      }
+                    },
+                    selectedColor: Colors.green.shade100,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.green.shade800 : Colors.black87,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 16),
               CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Set as default address'),
                 value: isDefault,
+                activeColor: Colors.green.shade700,
                 onChanged: (value) {
                   setState(() {
                     isDefault = value ?? false;
@@ -85,21 +107,22 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                 backgroundColor: Colors.green.shade700,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Save'),
+              child: const Text('Save Address'),
             ),
           ],
         ),
       ),
     );
 
-    if (result == true && labelController.text.trim().isNotEmpty) {
+    // FIX FOR ISSUE #5: Safely save the address without requiring typed input
+    if (result == true) {
       try {
         final addressProvider = Provider.of<AddressProvider>(context, listen: false);
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         
         await addressProvider.saveAddress(
           customerId: authProvider.customer!.id,
-          label: labelController.text.trim(),
+          label: selectedLabel,
           address: address,
           isDefault: isDefault,
         );
@@ -111,6 +134,11 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               backgroundColor: Colors.green,
             ),
           );
+          
+          // If we are in selecting mode, pop immediately with the new address
+          if (widget.isSelecting) {
+            Navigator.pop(context, address);
+          }
         }
       } catch (e) {
         if (mounted) {

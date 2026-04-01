@@ -1,15 +1,1 @@
-{
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ]
-}
+{"flutter":{"platforms":{"android":{"default":{"projectId":"chinaragro-89cdc","appId":"1:701191082956:android:95d66ecbb6b2893ebdc369","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"chinaragro-89cdc","appId":"1:701191082956:ios:17ed6b3c010c898bbdc369","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"chinaragro-89cdc","appId":"1:701191082956:ios:17ed6b3c010c898bbdc369","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"chinaragro-89cdc","configurations":{"android":"1:701191082956:android:95d66ecbb6b2893ebdc369","ios":"1:701191082956:ios:17ed6b3c010c898bbdc369","macos":"1:701191082956:ios:17ed6b3c010c898bbdc369","web":"1:701191082956:web:75b17064a853ea95bdc369","windows":"1:701191082956:web:a38c3a93df00a54abdc369"}}}}}}

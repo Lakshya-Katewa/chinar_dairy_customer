@@ -4,7 +4,6 @@ import '../providers/subscription_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/subscription.dart';
 
-// The main screen widget
 class SubscriptionsScreen extends StatefulWidget {
   const SubscriptionsScreen({super.key});
 
@@ -16,7 +15,6 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load subscriptions after the first frame is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -27,7 +25,6 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
     });
   }
 
-  // Helper methods for status and type text/color
   Color _getStatusColor(SubscriptionStatus status) {
     switch (status) {
       case SubscriptionStatus.active:
@@ -56,6 +53,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
   String _getTypeText(SubscriptionType type) {
     switch (type) {
+      case SubscriptionType.trial: // FIX FOR ISSUE #11: Added Trial support
+        return '3-Day Trial';
       case SubscriptionType.monthly:
         return 'Monthly';
       case SubscriptionType.weekly:
@@ -64,173 +63,168 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         return 'Alternate Day';
     }
   }
-
-  // New helper widget for the bottom sheet days display
   
   Widget _buildDaysInfo(String label, int value, Color color) {
-  return Expanded(
-    child: Column(
-      children: [
-        Text(
-          value.toString(),
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value.toString(),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-  // Updated bottom sheet for subscription actions
-// Replace the existing _showSubscriptionActions method with this updated version
-void _showSubscriptionActions(Subscription subscription) {
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      // --- START: CALCULATION LOGIC ---
-      final now = DateTime.now();
-      // Use today's date at midnight for accurate day difference calculation
-      final today = DateTime(now.year, now.month, now.day);
-      int totalDays = 0;
-      int daysUsed = 0;
+  void _showSubscriptionActions(Subscription subscription) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        int totalDays = 0;
+        int daysUsed = 0;
 
-      if (subscription.endDate != null) {
-        // Total duration of the subscription in days (inclusive)
-        totalDays = subscription.endDate!.difference(subscription.startDate).inDays + 1;
+        if (subscription.endDate != null) {
+          totalDays = subscription.endDate!.difference(subscription.startDate).inDays + 1;
 
-        // Calculate days used only if the subscription has started
-        if (today.isAfter(subscription.startDate) || today.isAtSameMomentAs(subscription.startDate)) {
-            daysUsed = today.difference(subscription.startDate).inDays + 1;
+          if (today.isAfter(subscription.startDate) || today.isAtSameMomentAs(subscription.startDate)) {
+              daysUsed = today.difference(subscription.startDate).inDays + 1;
+          }
+          
+          daysUsed = daysUsed.clamp(0, totalDays);
         }
         
-        // Ensure daysUsed does not exceed totalDays (for expired subscriptions)
-        daysUsed = daysUsed.clamp(0, totalDays);
-      }
-      
-      final int daysRemaining = totalDays - daysUsed;
-      // --- END: CALCULATION LOGIC ---
+        final int daysRemaining = totalDays - daysUsed;
 
-      return Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    subscription.productName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(subscription.status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: _getStatusColor(subscription.status)),
-                    ),
-                    child: Text(
-                      'Status: ${_getStatusText(subscription.status)}',
-                      style: TextStyle(
-                        color: _getStatusColor(subscription.status),
-                        fontWeight: FontWeight.w600,
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      subscription.productName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(subscription.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _getStatusColor(subscription.status)),
+                      ),
+                      child: Text(
+                        'Status: ${_getStatusText(subscription.status)}',
+                        style: TextStyle(
+                          color: _getStatusColor(subscription.status),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Plan: ${_getTypeText(subscription.type)}',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildDaysInfo('Days Used', daysUsed, Colors.orange.shade700),
+                  _buildDaysInfo('Days Remaining', daysRemaining, Colors.green.shade700),
+                  _buildDaysInfo('Total Days', totalDays, Colors.blue.shade700),
                 ],
               ),
-            ),
-            
-            // --- NEW WIDGET TO DISPLAY DAYS ---
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildDaysInfo('Days Used', daysUsed, Colors.orange.shade700),
-                _buildDaysInfo('Days Remaining', daysRemaining, Colors.green.shade700),
-                _buildDaysInfo('Total Days', totalDays, Colors.blue.shade700),
+              const SizedBox(height: 24),
+
+              if (subscription.status == SubscriptionStatus.active) ...[
+                _buildActionButton(
+                  icon: Icons.pause,
+                  label: 'Pause Subscription',
+                  color: Colors.orange,
+                  onTap: () => _pauseSubscription(subscription.id),
+                ),
+                const SizedBox(height: 12),
+                _buildActionButton(
+                  icon: Icons.cancel,
+                  label: 'Cancel Subscription',
+                  color: Colors.red,
+                  onTap: () => _cancelSubscription(subscription.id),
+                ),
+              ] else if (subscription.status == SubscriptionStatus.paused) ...[
+                _buildActionButton(
+                  icon: Icons.play_arrow,
+                  label: 'Resume Subscription',
+                  color: Colors.green,
+                  onTap: () => _resumeSubscription(subscription.id),
+                ),
+                const SizedBox(height: 12),
+                _buildActionButton(
+                  icon: Icons.cancel,
+                  label: 'Cancel Subscription',
+                  color: Colors.red,
+                  onTap: () => _cancelSubscription(subscription.id),
+                ),
               ],
-            ),
-            const SizedBox(height: 24),
-            // --- END OF NEW WIDGET ---
-
-            if (subscription.status == SubscriptionStatus.active) ...[
-              _buildActionButton(
-                icon: Icons.pause,
-                label: 'Pause Subscription',
-                color: Colors.orange,
-                onTap: () => _pauseSubscription(subscription.id),
-              ),
               const SizedBox(height: 12),
               _buildActionButton(
-                icon: Icons.cancel,
-                label: 'Cancel Subscription',
-                color: Colors.red,
-                onTap: () => _cancelSubscription(subscription.id),
+                icon: Icons.close,
+                label: 'Close',
+                color: Colors.grey,
+                onTap: () => Navigator.pop(context),
               ),
-            ] else if (subscription.status == SubscriptionStatus.paused) ...[
-              _buildActionButton(
-                icon: Icons.play_arrow,
-                label: 'Resume Subscription',
-                color: Colors.green,
-                onTap: () => _resumeSubscription(subscription.id),
-              ),
-              const SizedBox(height: 12),
-              _buildActionButton(
-                icon: Icons.cancel,
-                label: 'Cancel Subscription',
-                color: Colors.red,
-                onTap: () => _cancelSubscription(subscription.id),
-              ),
+              const SizedBox(height: 20),
             ],
-            const SizedBox(height: 12),
-            _buildActionButton(
-              icon: Icons.close,
-              label: 'Close',
-              color: Colors.grey,
-              onTap: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      );
-    },
-  );
-}
+          ),
+        );
+      },
+    );
+  }
 
-  // Helper for action buttons in the bottom sheet
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -255,7 +249,6 @@ void _showSubscriptionActions(Subscription subscription) {
     );
   }
 
-  // --- Subscription Action Methods ---
   Future<void> _pauseSubscription(String subscriptionId) async {
     Navigator.pop(context);
     try {
@@ -307,7 +300,7 @@ void _showSubscriptionActions(Subscription subscription) {
   }
 
   Future<void> _cancelSubscription(String subscriptionId) async {
-    Navigator.pop(context); // Close the bottom sheet first
+    Navigator.pop(context);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -369,7 +362,6 @@ void _showSubscriptionActions(Subscription subscription) {
     }
   }
 
-  // --- Main Build Method ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -402,7 +394,6 @@ void _showSubscriptionActions(Subscription subscription) {
     );
   }
 
-  // --- Updated Empty State Widget ---
   Widget _buildEmptyState() {
     return Center(
       child: SingleChildScrollView(
@@ -444,7 +435,6 @@ void _showSubscriptionActions(Subscription subscription) {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                // This will attempt to switch to the first tab of a TabBarView
                 DefaultTabController.of(context)?.animateTo(0);
               },
               icon: const Icon(Icons.shopping_cart_outlined),
@@ -469,8 +459,6 @@ void _showSubscriptionActions(Subscription subscription) {
   }
 }
 
-
-// --- New Self-Contained Subscription Card Widget ---
 class SubscriptionCard extends StatelessWidget {
   final Subscription subscription;
   final VoidCallback onTap;
@@ -481,7 +469,6 @@ class SubscriptionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // Helper methods duplicated for encapsulation
   Color _getStatusColor(SubscriptionStatus status) {
     switch (status) {
       case SubscriptionStatus.active: return Colors.green;
@@ -502,7 +489,6 @@ class SubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Progress bar calculation ---
     int totalDays = 1;
     int daysUsed = 0;
     if (subscription.endDate != null) {
@@ -514,7 +500,6 @@ class SubscriptionCard extends StatelessWidget {
       daysUsed = daysUsed.clamp(0, totalDays);
     }
     final double progress = totalDays > 0 ? daysUsed / totalDays : 0.0;
-    // --- End of calculation ---
 
     final statusColor = _getStatusColor(subscription.status);
 

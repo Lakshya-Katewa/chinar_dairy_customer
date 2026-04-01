@@ -50,15 +50,7 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        // This is a dummy decoration. Replace with your actual decoration.
-        // For example, if you have a gradient, it would look like:
-        // decoration: BoxDecoration(
-        //   gradient: LinearGradient(
-        //     colors: [Colors.blue, Colors.purple],
-        //     begin: Alignment.topLeft,
-        //     end: Alignment.bottomRight,
-        //   ),
-        // ),
+        color: Colors.white,
         child: Column(
           children: [
             // Header
@@ -66,8 +58,13 @@ class AppDrawer extends StatelessWidget {
               builder: (context, authProvider, child) {
                 final customer = authProvider.customer;
                 return UserAccountsDrawerHeader(
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
+                  // FIX FOR ISSUE #4: Added a green background so white text is visible
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.green.shade600, Colors.green.shade800],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                   accountName: Text(
                     customer?.name ?? 'User',
@@ -88,7 +85,7 @@ class AppDrawer extends StatelessWidget {
                     child: Icon(
                       Icons.person,
                       size: 40,
-                      color: Theme.of(context).primaryColor,
+                      color: Colors.green.shade700,
                     ),
                   ),
                 );
@@ -99,13 +96,9 @@ class AppDrawer extends StatelessWidget {
               child: Container(
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
                 ),
                 child: ListView(
-                  padding: const EdgeInsets.only(top: 20),
+                  padding: const EdgeInsets.only(top: 8),
                   children: [
                     _buildDrawerItem(
                       icon: Icons.person,
@@ -142,7 +135,7 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
                     
-                    // --- NEWLY ADDED: MY INVOICES TILE ---
+                    // My Invoices Tile
                     _buildDrawerItem(
                       icon: Icons.receipt_long,
                       title: 'My Invoices',
@@ -217,10 +210,10 @@ class AppDrawer extends StatelessWidget {
             ),
             // App Version
             Container(
-              color: Colors.white, // Ensure background matches for version text
+              color: Colors.white, 
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'Chinar Dairy v1.0.0', // Replace with your actual app version
+                'Chinar Dairy v1.0.0', 
                 style: TextStyle(
                   color: Colors.grey.shade600,
                   fontSize: 12,

@@ -1,5 +1,3 @@
-// cart_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +8,6 @@ import '../providers/address_provider.dart';
 import '../widgets/cart_item_card.dart';
 import '../models/address.dart';
 import './address_management.dart';
-import './main_screen.dart'; // Import MainScreen to access its routeName
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -22,6 +19,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
   DetailedAddress? selectedAddress;
+  bool _isPlacingOrder = false; // Added to prevent double-taps (Issue #3)
 
   @override
   void initState() {
@@ -75,6 +73,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _placeOrder() async {
+    if (_isPlacingOrder) return; // Prevent double execution
+
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
@@ -111,6 +111,7 @@ class _CartScreenState extends State<CartScreen> {
           backgroundColor: Colors.red,
           action: SnackBarAction(
             label: 'Add Money',
+            textColor: Colors.white,
             onPressed: () {
               Navigator.pushNamed(context, '/wallet');
             },
@@ -149,6 +150,17 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
+    setState(() => _isPlacingOrder = true);
+
+    // Show un-dismissible loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
     try {
       await orderProvider.placeOrder(
         customer: authProvider.customer!,
@@ -158,10 +170,11 @@ class _CartScreenState extends State<CartScreen> {
       );
 
       await cartProvider.clearCart(authProvider.customer!.id);
-
       await authProvider.refreshCustomerData();
 
       if (mounted) {
+        Navigator.pop(context); // Dismiss the loading dialog
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Order placed successfully!'),
@@ -169,12 +182,12 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
 
-        // --- THIS IS THE FIX ---
-        // Pop until we get to the MainScreen, making it the current screen.
-       Navigator.of(context).popUntil(ModalRoute.withName('/main'));
+        // FIX FOR ISSUE #2: Use pushNamedAndRemoveUntil to guarantee no black screen
+        Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context); // Dismiss the loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error placing order: $e'),
@@ -182,12 +195,15 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isPlacingOrder = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // ... no changes to the build method ...
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -377,7 +393,7 @@ class _CartScreenState extends State<CartScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _placeOrder,
+                        onPressed: _isPlacingOrder ? null : _placeOrder,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade700,
                           foregroundColor: Colors.white,
@@ -386,13 +402,22 @@ class _CartScreenState extends State<CartScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Place Order',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isPlacingOrder
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Place Order',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],

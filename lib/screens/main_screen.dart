@@ -288,8 +288,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             baseColor: Colors.grey.shade300,
             highlightColor: Colors.grey.shade100,
             child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 16.0),
-              height: (MediaQuery.of(context).size.width - 32) / 2.5,
+              margin: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+              // FIX FOR ISSUE #6: Increased placeholder height (width / 1.8 instead of 2.5)
+              height: (MediaQuery.of(context).size.width - 32) / 1.8,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -328,7 +329,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                       // --- IMAGE ---
                       Image.network(
                         banner.imageUrl,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.cover, // Keeps it filling the space but shows more vertically now
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.grey.shade200,
                           child: Center(
@@ -397,7 +398,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           },
           options: CarouselOptions(
             autoPlay: banners.length > 1,
-            aspectRatio: 2.5,
+            // FIX FOR ISSUE #6: Increased height by reducing aspect ratio (2.5 -> 1.8)
+            aspectRatio: 1.8, 
             enlargeCenterPage: true,
             viewportFraction: 0.9,
           ),
@@ -411,8 +413,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return Consumer<ProductProvider>(
       builder: (context, productProvider, child) {
         final categories = productProvider.categories;
-        if (categories.length <= 1)
-          return const SizedBox.shrink();
+        if (categories.length <= 1) return const SizedBox.shrink();
 
         return SizedBox(
           height: 40,
@@ -618,7 +619,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-
   // Main Build Method with New Widgets
   @override
   Widget build(BuildContext context) {
@@ -632,7 +632,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           SliverToBoxAdapter(child: _buildBanners()),
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16), // Adjusted top margin
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -670,10 +670,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           ),
           SliverToBoxAdapter(child: _buildCategoryChips()),
           
-          // NEW WIDGETS INTEGRATED HERE
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           SliverToBoxAdapter(child: _buildReferralPoster()),
-          SliverToBoxAdapter(child: _buildWhyChooseUsSection()),
+          // FIX FOR ISSUE #12: "Why Choose Us" moved below the products grid
           
           SliverToBoxAdapter(child: _buildSectionHeader('Our Products')),
           Consumer<ProductProvider>(
@@ -746,6 +745,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               );
             },
           ),
+
+          // FIX FOR ISSUE #12: "Why Choose Us" appears at the bottom
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          SliverToBoxAdapter(child: _buildWhyChooseUsSection()),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum SubscriptionType { monthly, weekly, alternateDay }
+// FIX FOR ISSUE #11: Added 'trial' to the enum
+enum SubscriptionType { trial, weekly, monthly, alternateDay }
 enum SubscriptionStatus { active, paused, cancelled, expired }
 
 class Subscription {

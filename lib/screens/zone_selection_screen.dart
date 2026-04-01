@@ -28,7 +28,8 @@ class Area {
       id: doc.id,
       name: data['name'] ?? '',
       areaCode: data['areaCode'] ?? '',
-      isActive: data['isActive'] ?? true,
+      // Default to true so areas show up even if the field is missing in the database
+      isActive: data['isActive'] ?? true, 
       deliveryCharge: (data['deliveryCharge'] ?? 0.0).toDouble(),
       description: data['description'],
     );
@@ -71,13 +72,19 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
 
   Future<void> _loadAreas() async {
     try {
+      // FIX FOR ISSUE #10: Removed .where('isActive', isEqualTo: true)
+      // This prevents issues where the document exists but is missing the isActive boolean field.
       final snapshot = await FirebaseFirestore.instance
           .collection('areas')
-          .where('isActive', isEqualTo: true)
           .get();
 
       setState(() {
-        _areas = snapshot.docs.map((doc) => Area.fromFirestore(doc)).toList();
+        // Map, then filter locally
+        _areas = snapshot.docs
+            .map((doc) => Area.fromFirestore(doc))
+            .where((area) => area.isActive) // Filter out explicitly inactive ones
+            .toList();
+            
         _areas.sort((a, b) => a.name.compareTo(b.name));
         _isLoading = false;
       });

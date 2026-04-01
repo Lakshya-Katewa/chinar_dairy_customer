@@ -1,9 +1,8 @@
-// profile_screen.dart
-
-import 'package:chinar_dairy/screens/address_management.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
+import '../screens/address_management.dart';
 import '../screens/referal_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,20 +13,27 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ... (all your existing code like _nameController, initState, dispose, _signOut) ...
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  
+  bool _isEditing = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.customer != null) {
-        _nameController.text = authProvider.customer!.name;
-        _emailController.text = authProvider.customer!.email;
-      }
+      _loadUserData();
     });
+  }
+  
+  void _loadUserData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.customer != null) {
+      _nameController.text = authProvider.customer!.name;
+      _emailController.text = authProvider.customer!.email;
+    }
   }
 
   @override
@@ -35,6 +41,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  // FIX FOR ISSUE #7: Method to save profile changes to Firestore
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final customerId = authProvider.customer!.id;
+
+      // Update Firestore
+      await FirebaseFirestore.instance.collection('customers').doc(customerId).update({
+        'name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Refresh local provider data
+      await authProvider.refreshCustomerData();
+
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _signOut() async {
@@ -69,209 +126,263 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // WRAP your existing content with a Scaffold
     return Scaffold(
-      // ADD an AppBar for the title and back button
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          if (!_isEditing)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Edit Profile',
+              onPressed: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: 'Cancel Edit',
+              onPressed: () {
+                setState(() {
+                  _isEditing = false;
+                  _loadUserData(); // Revert changes
+                });
+              },
+            ),
+        ],
       ),
-      // ADD a background color for consistency
       backgroundColor: const Color(0xFFF8F9FA),
-      // Your existing SingleChildScrollView becomes the body
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Consumer<AuthProvider>(
           builder: (context, authProvider, child) {
-            // ... (The rest of your Column and widget code remains exactly the same)
             final customer = authProvider.customer;
             
-            return Column(
-              children: [
-                // Profile Picture
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(60),
+            return Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // Profile Picture
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(60),
+                    ),
+                    child: Icon(
+                      Icons.person,
+                      size: 60,
+                      color: Colors.green.shade700,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.green.shade700,
+                  const SizedBox(height: 24),
+                  
+                  // Profile Information
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Personal Information',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // FIX FOR ISSUE #7: Conditionally render Text vs TextFormField
+                          if (_isEditing) ...[
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Full Name',
+                                prefixIcon: Icon(Icons.person),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) => 
+                                value!.isEmpty ? 'Name cannot be empty' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: const InputDecoration(
+                                labelText: 'Email Address',
+                                prefixIcon: Icon(Icons.email),
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) return 'Email cannot be empty';
+                                if (!value.contains('@')) return 'Enter a valid email';
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _saveProfile,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: _isLoading 
+                                    ? const SizedBox(
+                                        height: 20, width: 20, 
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                      )
+                                    : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            )
+                          ] else ...[
+                            _buildInfoRow(
+                              icon: Icons.person,
+                              label: 'Name',
+                              value: customer?.name ?? 'Not available',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              icon: Icons.email,
+                              label: 'Email',
+                              value: customer?.email ?? 'Not available',
+                            ),
+                          ],
+                          
+                          const SizedBox(height: 12),
+                          // Phone is read-only as it's tied to Auth
+                          _buildInfoRow(
+                            icon: Icons.phone,
+                            label: 'Phone',
+                            value: customer?.phone != null ? '+91 ${customer!.phone}' : 'Not available',
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          _buildInfoRow(
+                            icon: Icons.location_on,
+                            label: 'Address',
+                            value: customer?.address.formattedAddress ?? 'Not available',
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          _buildInfoRow(
+                            icon: Icons.account_balance_wallet,
+                            label: 'Wallet Balance',
+                            value: customer != null ? '₹${customer.walletBalance.toStringAsFixed(2)}' : '₹0.00',
+                            valueColor: Colors.green.shade700,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Profile Information
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Personal Information',
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Menu Options
+                  if (!_isEditing) ...[
+                    Card(
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.location_on),
+                            title: const Text('Manage Addresses'),
+                            subtitle: const Text('Add, edit or delete saved addresses'),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddressManagementScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.card_giftcard),
+                            title: const Text('Refer & Earn'),
+                            subtitle: const Text('Invite friends and earn rewards'),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ReferralScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.location_city),
+                            title: const Text('Change Delivery Area'),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.pushNamed(context, '/zone-selection');
+                            },
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.help),
+                            title: const Text('Help & Support'),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              // Navigate to help screen
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Sign Out Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _signOut,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign Out',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        
-                        // Name
-                        _buildInfoRow(
-                          icon: Icons.person,
-                          label: 'Name',
-                          value: customer?.name ?? 'Not available',
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Email
-                        _buildInfoRow(
-                          icon: Icons.email,
-                          label: 'Email',
-                          value: customer?.email ?? 'Not available',
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Phone
-                        _buildInfoRow(
-                          icon: Icons.phone,
-                          label: 'Phone',
-                          value: customer?.phone != null ? '+91 ${customer!.phone}' : 'Not available',
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Address
-                        _buildInfoRow(
-                          icon: Icons.location_on,
-                          label: 'Address',
-                          value: customer?.address.formattedAddress ?? 'Not available',
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Wallet Balance
-                        _buildInfoRow(
-                          icon: Icons.account_balance_wallet,
-                          label: 'Wallet Balance',
-                          value: customer != null ? '₹${customer.walletBalance.toStringAsFixed(2)}' : '₹0.00',
-                          valueColor: Colors.green.shade700,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Menu Options
-                Card(
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.location_on),
-                        title: const Text('Manage Addresses'),
-                        subtitle: const Text('Add, edit or delete saved addresses'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AddressManagementScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.card_giftcard),
-                        title: const Text('Refer & Earn'),
-                        subtitle: const Text('Invite friends and earn rewards'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ReferralScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.location_city),
-                        title: const Text('Change Delivery Area'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/area-selector');
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.help),
-                        title: const Text('Help & Support'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          // Navigate to help screen
-                        },
-                      ),
-                      const Divider(height: 1),
-                      ListTile(
-                        leading: const Icon(Icons.info),
-                        title: const Text('About'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          // Navigate to about screen
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Sign Out Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _signOut,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Sign Out',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ],
+                  
+                  const SizedBox(height: 16),
+                  
+                  Text(
+                    'Chinar Dairy v1.0.0',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
                     ),
                   ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // App Version
-                Text(
-                  'Chinar Dairy v1.0.0',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),
@@ -279,8 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ... (all your existing code like _buildInfoRow)
-    Widget _buildInfoRow({
+  Widget _buildInfoRow({
     required IconData icon,
     required String label,
     required String value,
