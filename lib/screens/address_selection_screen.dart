@@ -18,8 +18,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   LatLng _selectedLocation = const LatLng(34.0837, 74.7973); // Srinagar default
   bool _isLoading = false;
   bool _locationPermissionGranted = false;
-  
-  // Form controllers
+
   final _houseNumberController = TextEditingController();
   final _streetController = TextEditingController();
   final _cityController = TextEditingController();
@@ -70,31 +69,32 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   void _showPermissionDialog({bool isPermanent = false}) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Location Permission Required'),
-        content: Text(
-          isPermanent
-              ? 'Location permission is permanently denied. Please enable it in app settings to use location features for accurate delivery.'
-              : 'This app needs location permission to help you select your exact delivery address.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Location Permission Required'),
+            content: Text(
+              isPermanent
+                  ? 'Location permission is permanently denied. Please enable it in app settings to use location features for accurate delivery.'
+                  : 'This app needs location permission to help you select your exact delivery address.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  if (isPermanent) {
+                    openAppSettings();
+                  } else {
+                    _checkLocationPermission();
+                  }
+                },
+                child: Text(isPermanent ? 'Open Settings' : 'Grant Permission'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (isPermanent) {
-                openAppSettings();
-              } else {
-                _checkLocationPermission();
-              }
-            },
-            child: Text(isPermanent ? 'Open Settings' : 'Grant Permission'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -105,7 +105,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     }
 
     setState(() => _isLoading = true);
-    
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -120,7 +120,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
 
       _selectedLocation = LatLng(position.latitude, position.longitude);
       await _getAddressFromCoordinates(_selectedLocation);
-      
+
       _mapController.move(_selectedLocation, 16);
     } catch (e) {
       debugPrint('Error getting location: $e');
@@ -145,23 +145,26 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   void _showLocationServiceDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Location Services Disabled'),
-        content: const Text('Please enable location services so we can deliver accurately to your doorstep.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Location Services Disabled'),
+            content: const Text(
+              'Please enable location services so we can deliver accurately to your doorstep.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Geolocator.openLocationSettings();
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Geolocator.openLocationSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -175,7 +178,6 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
-          // Auto-fill form fields from geocoding
           if (place.subThoroughfare?.isNotEmpty == true) {
             _houseNumberController.text = place.subThoroughfare!;
           }
@@ -212,14 +214,16 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       street: _streetController.text.trim(),
       city: _cityController.text.trim(),
       pinCode: _pinCodeController.text.trim(),
-      landmark: _landmarkController.text.trim().isNotEmpty 
-          ? _landmarkController.text.trim() 
-          : null,
-      instructions: _instructionsController.text.trim().isNotEmpty 
-          ? _instructionsController.text.trim() 
-          : null,
-      latitude: _selectedLocation.latitude, // GPS location explicitly recorded here
-      longitude: _selectedLocation.longitude, // GPS location explicitly recorded here
+      landmark:
+          _landmarkController.text.trim().isNotEmpty
+              ? _landmarkController.text.trim()
+              : null,
+      instructions:
+          _instructionsController.text.trim().isNotEmpty
+              ? _instructionsController.text.trim()
+              : null,
+      latitude: _selectedLocation.latitude,
+      longitude: _selectedLocation.longitude,
       fullAddress: _buildFullAddress(),
     );
 
@@ -247,7 +251,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Delivery Address'),
+        title: const Text('Select Delivery GPS Location'),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
         actions: [
@@ -260,7 +264,6 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       ),
       body: Column(
         children: [
-          // Map Section
           Expanded(
             flex: 2,
             child: Stack(
@@ -276,7 +279,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.chinar_dairy',
                     ),
                     MarkerLayer(
@@ -298,11 +302,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                 if (_isLoading)
                   Container(
                     color: Colors.black26,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
-                // Location instruction overlay
                 Positioned(
                   top: 16,
                   left: 16,
@@ -326,7 +327,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
-                            'Tap map to set exact delivery GPS location',
+                            'Tap map to set exact delivery GPS location. We use this for delivery.',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -340,8 +341,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
               ],
             ),
           ),
-          
-          // Address Form Section
+
           Expanded(
             flex: 3,
             child: Container(
@@ -360,8 +360,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
-                      // House Number and Street in a row
+
                       Row(
                         children: [
                           Expanded(
@@ -372,7 +371,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                                 labelText: 'House/Flat No. *',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.home),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
@@ -388,24 +390,21 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                             child: TextFormField(
                               controller: _streetController,
                               decoration: const InputDecoration(
-                                labelText: 'Street/Area *',
+                                labelText: 'Street/Area',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.location_city),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Required';
-                                }
-                                return null;
-                              },
+                              // FIX 5: Relaxed validator so missing geocode doesn't block users
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      
-                      // City and Pin Code in a row
+
                       Row(
                         children: [
                           Expanded(
@@ -413,17 +412,14 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                             child: TextFormField(
                               controller: _cityController,
                               decoration: const InputDecoration(
-                                labelText: 'City *',
+                                labelText: 'City',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.location_on),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Required';
-                                }
-                                return null;
-                              },
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -433,27 +429,20 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                               controller: _pinCodeController,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
-                                labelText: 'Pin Code *',
+                                labelText: 'Pin Code',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.pin_drop),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Required';
-                                }
-                                if (value.trim().length != 6) {
-                                  return 'Invalid';
-                                }
-                                return null;
-                              },
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      
-                      // Landmark
+
                       TextFormField(
                         controller: _landmarkController,
                         decoration: const InputDecoration(
@@ -461,12 +450,14 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                           hintText: 'e.g., Near City Mall',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.place),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
-                      // Delivery Instructions
+
                       TextFormField(
                         controller: _instructionsController,
                         maxLines: 2,
@@ -475,48 +466,14 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                           hintText: 'e.g., Ring the bell twice, Leave at door',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.note),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
-                      // Address Preview
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Address Preview:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _buildFullAddress().isNotEmpty 
-                                  ? _buildFullAddress()
-                                  : 'Fill the form to see address preview',
-                              style: TextStyle(
-                                color: _buildFullAddress().isNotEmpty 
-                                    ? Colors.black87 
-                                    : Colors.grey.shade600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Confirm Button
+
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -530,7 +487,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
                             ),
                           ),
                           child: const Text(
-                            'Confirm Address',
+                            'Save GPS Location & Continue',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

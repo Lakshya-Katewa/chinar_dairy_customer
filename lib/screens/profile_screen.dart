@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
-import '../screens/address_management.dart';
-import '../screens/referal_screen.dart';
+import 'address_management.dart';
+import 'referal_screen.dart';
+import 'area_selection_screen.dart'; // Fixed import for Area Update
+import 'help_support_screen.dart'; // Fixed import for Help
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,7 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  
+
   bool _isEditing = false;
   bool _isLoading = false;
 
@@ -27,7 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _loadUserData();
     });
   }
-  
+
   void _loadUserData() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.customer != null) {
@@ -43,7 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // FIX FOR ISSUE #7: Method to save profile changes to Firestore
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -56,11 +57,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final customerId = authProvider.customer!.id;
 
       // Update Firestore
-      await FirebaseFirestore.instance.collection('customers').doc(customerId).update({
-        'name': _nameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance
+          .collection('customers')
+          .doc(customerId)
+          .update({
+            'name': _nameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       // Refresh local provider data
       await authProvider.refreshCustomerData();
@@ -97,24 +101,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _signOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Sign Out'),
+            content: const Text('Are you sure you want to sign out?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Sign Out'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Sign Out'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -164,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Consumer<AuthProvider>(
           builder: (context, authProvider, child) {
             final customer = authProvider.customer;
-            
+
             return Form(
               key: _formKey,
               child: Column(
@@ -184,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Profile Information
                   Card(
                     child: Padding(
@@ -200,8 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
-                          // FIX FOR ISSUE #7: Conditionally render Text vs TextFormField
+
                           if (_isEditing) ...[
                             TextFormField(
                               controller: _nameController,
@@ -210,8 +217,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 prefixIcon: Icon(Icons.person),
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) => 
-                                value!.isEmpty ? 'Name cannot be empty' : null,
+                              validator:
+                                  (value) =>
+                                      value!.isEmpty
+                                          ? 'Name cannot be empty'
+                                          : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -223,8 +233,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 border: OutlineInputBorder(),
                               ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) return 'Email cannot be empty';
-                                if (!value.contains('@')) return 'Enter a valid email';
+                                if (value == null || value.isEmpty)
+                                  return 'Email cannot be empty';
+                                if (!value.contains('@'))
+                                  return 'Enter a valid email';
                                 return null;
                               },
                             ),
@@ -234,18 +246,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _saveProfile,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).primaryColor,
+                                  backgroundColor:
+                                      Theme.of(context).primaryColor,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                 ),
-                                child: _isLoading 
-                                    ? const SizedBox(
-                                        height: 20, width: 20, 
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                                      )
-                                    : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                                child:
+                                    _isLoading
+                                        ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                        : const Text(
+                                          'Save Changes',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                               ),
-                            )
+                            ),
                           ] else ...[
                             _buildInfoRow(
                               icon: Icons.person,
@@ -259,37 +284,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               value: customer?.email ?? 'Not available',
                             ),
                           ],
-                          
+
                           const SizedBox(height: 12),
-                          // Phone is read-only as it's tied to Auth
                           _buildInfoRow(
                             icon: Icons.phone,
                             label: 'Phone',
-                            value: customer?.phone != null ? '+91 ${customer!.phone}' : 'Not available',
+                            value:
+                                customer?.phone != null
+                                    ? '+91 ${customer!.phone}'
+                                    : 'Not available',
                           ),
                           const SizedBox(height: 12),
-                          
+
                           _buildInfoRow(
                             icon: Icons.location_on,
                             label: 'Address',
-                            value: customer?.address.formattedAddress ?? 'Not available',
+                            value:
+                                customer?.address.formattedAddress ??
+                                'Not available',
                             maxLines: 3,
                           ),
                           const SizedBox(height: 12),
-                          
+
                           _buildInfoRow(
                             icon: Icons.account_balance_wallet,
                             label: 'Wallet Balance',
-                            value: customer != null ? '₹${customer.walletBalance.toStringAsFixed(2)}' : '₹0.00',
+                            value:
+                                customer != null
+                                    ? '₹${customer.walletBalance.toStringAsFixed(2)}'
+                                    : '₹0.00',
                             valueColor: Colors.green.shade700,
                           ),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Menu Options
                   if (!_isEditing) ...[
                     Card(
@@ -298,13 +330,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ListTile(
                             leading: const Icon(Icons.location_on),
                             title: const Text('Manage Addresses'),
-                            subtitle: const Text('Add, edit or delete saved addresses'),
+                            subtitle: const Text(
+                              'Add, edit or delete saved addresses',
+                            ),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const AddressManagementScreen(),
+                                  builder:
+                                      (context) =>
+                                          const AddressManagementScreen(),
                                 ),
                               );
                             },
@@ -313,7 +349,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ListTile(
                             leading: const Icon(Icons.card_giftcard),
                             title: const Text('Refer & Earn'),
-                            subtitle: const Text('Invite friends and earn rewards'),
+                            subtitle: const Text(
+                              'Invite friends and earn rewards',
+                            ),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
                               Navigator.push(
@@ -330,7 +368,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: const Text('Change Delivery Area'),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
-                              Navigator.pushNamed(context, '/zone-selection');
+                              // Fixed routing to AreaSelectorScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => const AreaSelectorScreen(),
+                                ),
+                              );
                             },
                           ),
                           const Divider(height: 1),
@@ -339,15 +384,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             title: const Text('Help & Support'),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
-                              // Navigate to help screen
+                              // Fixed routing to HelpSupportScreen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => const HelpSupportScreen(),
+                                ),
+                              );
                             },
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Sign Out Button
                     SizedBox(
                       width: double.infinity,
@@ -371,16 +423,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ],
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   Text(
-                    'Chinar Dairy v1.0.0',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 12,
-                    ),
+                    'ChinarAgro v1.0.0',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             );
@@ -400,11 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: Colors.grey.shade600,
-        ),
+        Icon(icon, size: 20, color: Colors.grey.shade600),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -19,7 +19,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
   DetailedAddress? selectedAddress;
-  bool _isPlacingOrder = false; // Added to prevent double-taps (Issue #3)
+  bool _isPlacingOrder = false;
 
   @override
   void initState() {
@@ -27,7 +27,10 @@ class _CartScreenState extends State<CartScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+      final addressProvider = Provider.of<AddressProvider>(
+        context,
+        listen: false,
+      );
 
       if (authProvider.customer != null) {
         cartProvider.loadCartItems(authProvider.customer!.id);
@@ -73,13 +76,16 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _placeOrder() async {
-    if (_isPlacingOrder) return; // Prevent double execution
+    // FIX 3: Immediately lock the button to prevent double-taps firing twice
+    if (_isPlacingOrder) return;
+    setState(() => _isPlacingOrder = true);
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
     if (cartProvider.cartItems.isEmpty) {
+      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Your cart is empty'),
@@ -90,6 +96,7 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     if (selectedAddress == null) {
+      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a delivery address'),
@@ -100,9 +107,13 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
-    if (authProvider.customer == null) return;
+    if (authProvider.customer == null) {
+      setState(() => _isPlacingOrder = false);
+      return;
+    }
 
     if (authProvider.customer!.walletBalance < cartProvider.totalAmount) {
+      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -124,33 +135,36 @@ class _CartScreenState extends State<CartScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Confirm Your Order'),
-        content: const Text(
-            'Once placed, an order cannot be cancelled. Are you sure you want to proceed?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Go Back'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Yes, Place Order'),
+            title: const Text('Confirm Your Order'),
+            content: const Text(
+              'Once placed, an order cannot be cancelled. Are you sure you want to proceed?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Go Back'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Yes, Place Order'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed != true) {
+      setState(() => _isPlacingOrder = false);
       return;
     }
-
-    setState(() => _isPlacingOrder = true);
 
     // Show un-dismissible loading dialog
     showDialog(
@@ -173,8 +187,9 @@ class _CartScreenState extends State<CartScreen> {
       await authProvider.refreshCustomerData();
 
       if (mounted) {
-        Navigator.pop(context); // Dismiss the loading dialog
-        
+        // FIX 2: Safely pop the loading dialog using rootNavigator
+        Navigator.of(context, rootNavigator: true).pop();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Order placed successfully!'),
@@ -182,22 +197,19 @@ class _CartScreenState extends State<CartScreen> {
           ),
         );
 
-        // FIX FOR ISSUE #2: Use pushNamedAndRemoveUntil to guarantee no black screen
         Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Dismiss the loading dialog
+        // Safely pop the loading dialog on error
+        Navigator.of(context, rootNavigator: true).pop();
+        setState(() => _isPlacingOrder = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error placing order: $e'),
             backgroundColor: Colors.red,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isPlacingOrder = false);
       }
     }
   }
@@ -230,10 +242,7 @@ class _CartScreenState extends State<CartScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Your cart is empty',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -251,7 +260,6 @@ class _CartScreenState extends State<CartScreen> {
 
           return Column(
             children: [
-              // Cart Items
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -263,7 +271,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
 
-              // Address Selection
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 color: Colors.white,
@@ -288,16 +295,21 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.location_on, color: Theme.of(context).primaryColor),
+                            Icon(
+                              Icons.location_on,
+                              color: Theme.of(context).primaryColor,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                selectedAddress?.formattedAddress ?? 'Select or Add an Address',
+                                selectedAddress?.formattedAddress ??
+                                    'Select or Add an Address',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: selectedAddress != null
-                                      ? Colors.black
-                                      : Colors.grey.shade600,
+                                  color:
+                                      selectedAddress != null
+                                          ? Colors.black
+                                          : Colors.grey.shade600,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -313,7 +325,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
 
-              // Delivery Date Selection
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                 color: Colors.white,
@@ -338,7 +349,10 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today, color: Theme.of(context).primaryColor),
+                            Icon(
+                              Icons.calendar_today,
+                              color: Theme.of(context).primaryColor,
+                            ),
                             const SizedBox(width: 12),
                             Text(
                               DateFormat('dd MMMM yyyy').format(selectedDate),
@@ -354,7 +368,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
 
-              // Order Summary
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -402,22 +415,23 @@ class _CartScreenState extends State<CartScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: _isPlacingOrder
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                        child:
+                            _isPlacingOrder
+                                ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Text(
+                                  'Place Order',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )
-                            : const Text(
-                                'Place Order',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
                       ),
                     ),
                   ],

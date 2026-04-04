@@ -14,27 +14,28 @@ class AppDrawer extends StatelessWidget {
   Future<void> _signOut(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Sign Out'),
+            content: const Text('Are you sure you want to sign out?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Sign Out'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Sign Out'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -58,14 +59,8 @@ class AppDrawer extends StatelessWidget {
               builder: (context, authProvider, child) {
                 final customer = authProvider.customer;
                 return UserAccountsDrawerHeader(
-                  // FIX FOR ISSUE #4: Added a green background so white text is visible
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.green.shade600, Colors.green.shade800],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
+                  // FIX 4: Changed to a solid dark green so white text is highly visible
+                  decoration: BoxDecoration(color: Colors.green.shade800),
                   accountName: Text(
                     customer?.name ?? 'User',
                     style: const TextStyle(
@@ -77,7 +72,8 @@ class AppDrawer extends StatelessWidget {
                   accountEmail: Text(
                     customer?.email ?? customer?.phone ?? 'user@example.com',
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   currentAccountPicture: CircleAvatar(
@@ -85,7 +81,7 @@ class AppDrawer extends StatelessWidget {
                     child: Icon(
                       Icons.person,
                       size: 40,
-                      color: Colors.green.shade700,
+                      color: Colors.green.shade800,
                     ),
                   ),
                 );
@@ -94,9 +90,7 @@ class AppDrawer extends StatelessWidget {
             // Menu Items
             Expanded(
               child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                ),
+                decoration: const BoxDecoration(color: Colors.white),
                 child: ListView(
                   padding: const EdgeInsets.only(top: 8),
                   children: [
@@ -116,7 +110,8 @@ class AppDrawer extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AddressManagementScreen(),
+                            builder:
+                                (context) => const AddressManagementScreen(),
                           ),
                         );
                       },
@@ -134,8 +129,6 @@ class AppDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                    
-                    // My Invoices Tile
                     _buildDrawerItem(
                       icon: Icons.receipt_long,
                       title: 'My Invoices',
@@ -144,7 +137,6 @@ class AppDrawer extends StatelessWidget {
                         Navigator.pushNamed(context, '/invoices');
                       },
                     ),
-
                     _buildDrawerItem(
                       icon: Icons.help,
                       title: 'Help & Support',
@@ -210,14 +202,11 @@ class AppDrawer extends StatelessWidget {
             ),
             // App Version
             Container(
-              color: Colors.white, 
+              color: Colors.white,
               padding: const EdgeInsets.only(bottom: 16),
               child: Text(
-                'Chinar Dairy v1.0.0', 
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 12,
-                ),
+                'ChinarAgro v1.0.0', // RENAMED
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
             ),
           ],
@@ -233,10 +222,7 @@ class AppDrawer extends StatelessWidget {
     Color? textColor,
   }) {
     return ListTile(
-      leading: Icon(
-        icon,
-        color: textColor ?? Colors.grey.shade700,
-      ),
+      leading: Icon(icon, color: textColor ?? Colors.grey.shade700),
       title: Text(
         title,
         style: TextStyle(
@@ -245,9 +231,7 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
       onTap: onTap,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }

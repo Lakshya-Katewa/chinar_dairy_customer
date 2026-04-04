@@ -7,14 +7,12 @@ import '../models/address.dart';
 
 class AddressManagementScreen extends StatefulWidget {
   final bool isSelecting;
-  
-  const AddressManagementScreen({
-    super.key,
-    this.isSelecting = false,
-  });
+
+  const AddressManagementScreen({super.key, this.isSelecting = false});
 
   @override
-  State<AddressManagementScreen> createState() => _AddressManagementScreenState();
+  State<AddressManagementScreen> createState() =>
+      _AddressManagementScreenState();
 }
 
 class _AddressManagementScreenState extends State<AddressManagementScreen> {
@@ -22,9 +20,12 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+      final addressProvider = Provider.of<AddressProvider>(
+        context,
+        listen: false,
+      );
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       if (authProvider.customer != null) {
         addressProvider.loadSavedAddresses(authProvider.customer!.id);
       }
@@ -32,94 +33,105 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
   }
 
   Future<void> _addNewAddress() async {
-    final DetailedAddress? newAddress = await Navigator.pushNamed(
-      context,
-      '/address-selection',
-    ) as DetailedAddress?;
-    
+    final DetailedAddress? newAddress =
+        await Navigator.pushNamed(context, '/address-selection')
+            as DetailedAddress?;
+
     if (newAddress != null) {
       await _showSaveAddressDialog(newAddress);
     }
   }
 
   Future<void> _showSaveAddressDialog(DetailedAddress address) async {
-    // FIX FOR ISSUE #5 & #8: Use predefined labels and default to 'Home'
+    // FIX 8: Providing clear chips for labels. It's not a typed text box anymore.
     String selectedLabel = 'Home';
     bool isDefault = false;
 
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Save Address'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Save address as:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                children: ['Home', 'Office', 'Shop', 'Other'].map((label) {
-                  final isSelected = selectedLabel == label;
-                  return ChoiceChip(
-                    label: Text(label),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => selectedLabel = label);
-                      }
-                    },
-                    selectedColor: Colors.green.shade100,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.green.shade800 : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      barrierDismissible: false, // Prevent dismissing without choosing
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('Save Address'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Save address as:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children:
+                            ['Home', 'Office', 'Shop', 'Other'].map((label) {
+                              final isSelected = selectedLabel == label;
+                              return ChoiceChip(
+                                label: Text(label),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setState(() => selectedLabel = label);
+                                  }
+                                },
+                                selectedColor: Colors.green.shade100,
+                                labelStyle: TextStyle(
+                                  color:
+                                      isSelected
+                                          ? Colors.green.shade800
+                                          : Colors.black87,
+                                  fontWeight:
+                                      isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Set as default address'),
+                        value: isDefault,
+                        activeColor: Colors.green.shade700,
+                        onChanged: (value) {
+                          setState(() {
+                            isDefault = value ?? false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
                     ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Set as default address'),
-                value: isDefault,
-                activeColor: Colors.green.shade700,
-                onChanged: (value) {
-                  setState(() {
-                    isDefault = value ?? false;
-                  });
-                },
-              ),
-            ],
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Save Address'),
+                    ),
+                  ],
+                ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Save Address'),
-            ),
-          ],
-        ),
-      ),
     );
 
-    // FIX FOR ISSUE #5: Safely save the address without requiring typed input
     if (result == true) {
       try {
-        final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+        final addressProvider = Provider.of<AddressProvider>(
+          context,
+          listen: false,
+        );
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        
+
         await addressProvider.saveAddress(
           customerId: authProvider.customer!.id,
           label: selectedLabel,
@@ -134,8 +146,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          
-          // If we are in selecting mode, pop immediately with the new address
+
           if (widget.isSelecting) {
             Navigator.pop(context, address);
           }
@@ -194,10 +205,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No saved addresses',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -223,12 +231,16 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
                   leading: CircleAvatar(
-                    backgroundColor: address.isDefault 
-                        ? Colors.green.shade700 
-                        : Colors.grey.shade300,
+                    backgroundColor:
+                        address.isDefault
+                            ? Colors.green.shade700
+                            : Colors.grey.shade300,
                     child: Icon(
                       address.isDefault ? Icons.home : Icons.location_on,
-                      color: address.isDefault ? Colors.white : Colors.grey.shade600,
+                      color:
+                          address.isDefault
+                              ? Colors.white
+                              : Colors.grey.shade600,
                     ),
                   ),
                   title: Row(
@@ -287,73 +299,35 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                       ],
                     ],
                   ),
-                  trailing: widget.isSelecting
-                      ? const Icon(Icons.arrow_forward_ios)
-                      : PopupMenuButton<String>(
-                          onSelected: (value) async {
-                            switch (value) {
-                              case 'default':
-                                try {
-                                  await addressProvider.updateAddress(
-                                    address.id,
-                                    isDefault: true,
-                                  );
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Default address updated'),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Error: $e'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                }
-                                break;
-                              case 'delete':
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Delete Address'),
-                                    content: const Text('Are you sure you want to delete this address?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () => Navigator.pop(context, true),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                          foregroundColor: Colors.white,
-                                        ),
-                                        child: const Text('Delete'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                
-                                if (confirmed == true) {
+                  trailing:
+                      widget.isSelecting
+                          ? const Icon(Icons.arrow_forward_ios)
+                          : PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              switch (value) {
+                                case 'default':
                                   try {
-                                    await addressProvider.deleteAddress(address.id);
+                                    await addressProvider.updateAddress(
+                                      address.id,
+                                      isDefault: true,
+                                    );
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         const SnackBar(
-                                          content: Text('Address deleted'),
-                                          backgroundColor: Colors.red,
+                                          content: Text(
+                                            'Default address updated',
+                                          ),
+                                          backgroundColor: Colors.green,
                                         ),
                                       );
                                     }
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text('Error: $e'),
                                           backgroundColor: Colors.red,
@@ -361,35 +335,102 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                                       );
                                     }
                                   }
-                                }
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            if (!address.isDefault)
-                              const PopupMenuItem(
-                                value: 'default',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.home),
-                                    SizedBox(width: 8),
-                                    Text('Set as Default'),
-                                  ],
-                                ),
-                              ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.delete, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('Delete', style: TextStyle(color: Colors.red)),
+                                  break;
+                                case 'delete':
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder:
+                                        (context) => AlertDialog(
+                                          title: const Text('Delete Address'),
+                                          content: const Text(
+                                            'Are you sure you want to delete this address?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    false,
+                                                  ),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    true,
+                                                  ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                                foregroundColor: Colors.white,
+                                              ),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+
+                                  if (confirmed == true) {
+                                    try {
+                                      await addressProvider.deleteAddress(
+                                        address.id,
+                                      );
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Address deleted'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  }
+                                  break;
+                              }
+                            },
+                            itemBuilder:
+                                (context) => [
+                                  if (!address.isDefault)
+                                    const PopupMenuItem(
+                                      value: 'default',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.home),
+                                          SizedBox(width: 8),
+                                          Text('Set as Default'),
+                                        ],
+                                      ),
+                                    ),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete, color: Colors.red),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
-                              ),
-                            ),
-                          ],
-                        ),
-                  onTap: widget.isSelecting ? () => _selectAddress(address) : null,
+                          ),
+                  onTap:
+                      widget.isSelecting ? () => _selectAddress(address) : null,
                 ),
               );
             },

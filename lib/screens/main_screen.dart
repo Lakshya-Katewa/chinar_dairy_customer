@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   final PageController _pageController = PageController();
 
   final List<String> _titles = const [
-    'Chinar Dairy', // Home screen title
+    'ChinarAgro', // RENAMED
     'My Orders',
     'My Subscriptions',
     'My Wallet',
@@ -36,7 +36,10 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -94,10 +97,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     child: Text(
                       '${cartProvider.itemCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -114,8 +114,14 @@ class _MainScreenState extends State<MainScreen> {
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: () {
-            final orderProvider = Provider.of<OrderProvider>(context, listen: false);
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final orderProvider = Provider.of<OrderProvider>(
+              context,
+              listen: false,
+            );
+            final authProvider = Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            );
             if (authProvider.customer != null) {
               orderProvider.loadOrders(authProvider.customer!.id);
             }
@@ -136,7 +142,10 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               Text(
                 'Hello, ${authProvider.customer?.name ?? 'User'}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
               Row(
@@ -243,9 +252,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// ===================================================================
-// ===== FULLY REVAMPED HomeScreenContent WIDGET STARTS HERE =====
-// ===================================================================
 class HomeScreenContent extends StatefulWidget {
   const HomeScreenContent({super.key});
 
@@ -275,22 +281,25 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     super.dispose();
   }
 
-  // ## NEW: Professional Banner Widget ##
   Widget _buildBanners() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('banners')
-          .where('isActive', isEqualTo: true)
-          .snapshots(),
+      stream:
+          FirebaseFirestore.instance
+              .collection('banners')
+              .where('isActive', isEqualTo: true)
+              .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Shimmer.fromColors(
             baseColor: Colors.grey.shade300,
             highlightColor: Colors.grey.shade100,
             child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-              // FIX FOR ISSUE #6: Increased placeholder height (width / 1.8 instead of 2.5)
-              height: (MediaQuery.of(context).size.width - 32) / 1.8,
+              margin: const EdgeInsets.symmetric(
+                vertical: 16.0,
+                horizontal: 16.0,
+              ),
+              // Height matches the new aspect ratio below
+              height: (MediaQuery.of(context).size.width - 32) / 1.5,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -302,9 +311,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const SizedBox.shrink();
         }
-        final banners = snapshot.data!.docs
-            .map((doc) => AdBanner.fromFirestore(doc))
-            .toList();
+        final banners =
+            snapshot.data!.docs
+                .map((doc) => AdBanner.fromFirestore(doc))
+                .toList();
 
         return CarouselSlider.builder(
           itemCount: banners.length,
@@ -313,83 +323,99 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             return GestureDetector(
               onTap: () {
                 if (banner.actionType == 'category') {
-                  Provider.of<ProductProvider>(context, listen: false)
-                      .filterByCategory(banner.target);
+                  Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  ).filterByCategory(banner.target);
                 }
-                debugPrint(
-                    'Banner tapped: Action=${banner.actionType}, Target=${banner.target}');
               },
               child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 16.0),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 5.0,
+                  vertical: 16.0,
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // --- IMAGE ---
-                      Image.network(
-                        banner.imageUrl,
-                        fit: BoxFit.cover, // Keeps it filling the space but shows more vertically now
-                        errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade200,
-                          child: Center(
-                            child: Icon(
-                              Icons.broken_image_outlined,
-                              color: Colors.grey.shade400,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // --- GRADIENT OVERLAY ---
+                      // FIX 6: Image fit changed to contain, wrapped in white background
                       Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.8),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.center,
+                        color: Colors.white,
+                        child: Image.network(
+                          banner.imageUrl,
+                          fit: BoxFit.contain, // Prevents cropping
+                          errorBuilder:
+                              (_, __, ___) => Container(
+                                color: Colors.grey.shade200,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: Colors.grey.shade400,
+                                    size: 40,
+                                  ),
+                                ),
+                              ),
+                        ),
+                      ),
+                      if (banner.title.isNotEmpty ||
+                          banner.subtitle.isNotEmpty) ...[
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.black.withOpacity(0.8),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.center,
+                            ),
                           ),
                         ),
-                      ),
-                      // --- TEXT CONTENT ---
-                      Positioned(
-                        left: 16,
-                        bottom: 16,
-                        right: 16,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              banner.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                      blurRadius: 4, color: Colors.black54)
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              banner.subtitle,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                shadows: [
-                                  Shadow(
-                                      blurRadius: 4, color: Colors.black54)
-                                ],
-                              ),
-                            ),
-                          ],
+                        Positioned(
+                          left: 16,
+                          bottom: 16,
+                          right: 16,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (banner.title.isNotEmpty)
+                                Text(
+                                  banner.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 4,
+                                        color: Colors.black54,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (banner.subtitle.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(
+                                    banner.subtitle,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 4,
+                                          color: Colors.black54,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
@@ -398,17 +424,16 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           },
           options: CarouselOptions(
             autoPlay: banners.length > 1,
-            // FIX FOR ISSUE #6: Increased height by reducing aspect ratio (2.5 -> 1.8)
-            aspectRatio: 1.8, 
+            // FIX 6: Changed from 1.8 to 1.5 to make banner 20% taller/bigger
+            aspectRatio: 1.5,
             enlargeCenterPage: true,
-            viewportFraction: 0.9,
+            viewportFraction: 0.95, // Made wider to utilize screen width
           ),
         );
       },
     );
   }
 
-  // Category Filter Chips Widget
   Widget _buildCategoryChips() {
     return Consumer<ProductProvider>(
       builder: (context, productProvider, child) {
@@ -436,15 +461,19 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 backgroundColor: Colors.white,
                 selectedColor: Theme.of(context).primaryColor.withOpacity(0.1),
                 labelStyle: TextStyle(
-                  color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
+                  color:
+                      isSelected
+                          ? Theme.of(context).primaryColor
+                          : Colors.black87,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: BorderSide(
-                    color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey.shade300,
+                    color:
+                        isSelected
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey.shade300,
                   ),
                 ),
               );
@@ -455,21 +484,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  // Reusable Section Header
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
       child: Text(
         title,
-        style: Theme.of(context)
-            .textTheme
-            .titleLarge
-            ?.copyWith(fontWeight: FontWeight.bold),
+        style: Theme.of(
+          context,
+        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  // Referral Poster Widget
   Widget _buildReferralPoster() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -550,7 +576,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  // "Why Choose Us" Section
+  // FIX 12: This widget is now placed at the bottom of the Slivers
   Widget _buildWhyChooseUsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -563,7 +589,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Why Choose Chinar Dairy? 🐮',
+            'Why Choose ChinarAgro? 🐮',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -575,16 +601,19 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildFeatureItem('Farm Fresh', Icons.eco_outlined, Colors.green),
-              _buildFeatureItem('Purity+', Icons.verified_outlined, Colors.blue),
+              _buildFeatureItem(
+                'Purity+',
+                Icons.verified_outlined,
+                Colors.blue,
+              ),
               _buildFeatureItem('On-Time', Icons.timer_outlined, Colors.orange),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  // Helper for "Why Choose Us" items
   Widget _buildFeatureItem(String label, IconData icon, Color color) {
     return Expanded(
       child: Column(
@@ -598,9 +627,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 BoxShadow(
                   color: color.withOpacity(0.1),
                   blurRadius: 8,
-                  offset: const Offset(0, 4)
-                )
-              ]
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Icon(icon, color: color, size: 32),
           ),
@@ -609,7 +638,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12, 
+              fontSize: 12,
               color: Colors.blueGrey.shade700,
               fontWeight: FontWeight.w600,
             ),
@@ -619,13 +648,14 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  // Main Build Method with New Widgets
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
-        await Provider.of<ProductProvider>(context, listen: false)
-            .loadProducts();
+        await Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        ).loadProducts();
       },
       child: CustomScrollView(
         slivers: [
@@ -638,7 +668,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.05), blurRadius: 10)
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
               child: TextField(
@@ -646,34 +678,38 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 decoration: InputDecoration(
                   hintText: 'Search for milk, paneer, curd...',
                   prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            Provider.of<ProductProvider>(context,
-                                    listen: false)
-                                .searchProducts('');
-                          },
-                        )
-                      : null,
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              Provider.of<ProductProvider>(
+                                context,
+                                listen: false,
+                              ).searchProducts('');
+                            },
+                          )
+                          : null,
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
                 onChanged: (value) {
-                  Provider.of<ProductProvider>(context, listen: false)
-                      .searchProducts(value);
+                  Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  ).searchProducts(value);
                 },
               ),
             ),
           ),
           SliverToBoxAdapter(child: _buildCategoryChips()),
-          
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           SliverToBoxAdapter(child: _buildReferralPoster()),
-          // FIX FOR ISSUE #12: "Why Choose Us" moved below the products grid
-          
+
           SliverToBoxAdapter(child: _buildSectionHeader('Our Products')),
           Consumer<ProductProvider>(
             builder: (context, productProvider, child) {
@@ -683,26 +719,23 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return Shimmer.fromColors(
-                          baseColor: Colors.grey.shade300,
-                          highlightColor: Colors.grey.shade100,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.7,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        );
-                      },
-                      childCount: 6,
-                    ),
+                        ),
+                      );
+                    }, childCount: 6),
                   ),
                 );
               }
@@ -712,13 +745,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off,
-                            size: 64, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No products found',
                           style: TextStyle(
-                              fontSize: 18, color: Colors.grey.shade600),
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                       ],
                     ),
@@ -734,19 +772,15 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final product = productProvider.products[index];
-                      return ProductCard(product: product);
-                    },
-                    childCount: productProvider.products.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = productProvider.products[index];
+                    return ProductCard(product: product);
+                  }, childCount: productProvider.products.length),
                 ),
               );
             },
           ),
-
-          // FIX FOR ISSUE #12: "Why Choose Us" appears at the bottom
+          // FIX 12: Why Choose Us moved here to the bottom of the page
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
           SliverToBoxAdapter(child: _buildWhyChooseUsSection()),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
