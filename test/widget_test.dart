@@ -13,7 +13,8 @@ import 'package:chinar_dairy/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ChinaarDairyApp());
+    // FIX: Changed ChinaarDairyApp() to ChinarAgroApp() to match your updated main.dart
+    await tester.pumpWidget(const ChinarAgroApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
