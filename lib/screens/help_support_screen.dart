@@ -75,15 +75,12 @@ class HelpSupportScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   const Text(
                     'Get in touch with our support team',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
             ),
-            
+
             // Contact Options
             Padding(
               padding: const EdgeInsets.all(20),
@@ -97,9 +94,9 @@ class HelpSupportScreen extends StatelessWidget {
                     color: Colors.green,
                     onTap: () => _launchPhone('+919876543210'),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildContactCard(
                     icon: Icons.email,
                     title: 'Email Support',
@@ -108,9 +105,9 @@ class HelpSupportScreen extends StatelessWidget {
                     color: Colors.blue,
                     onTap: () => _launchEmail('support@chinardairy.com'),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildContactCard(
                     icon: Icons.chat,
                     title: 'WhatsApp',
@@ -119,9 +116,9 @@ class HelpSupportScreen extends StatelessWidget {
                     color: Colors.green.shade600,
                     onTap: () => _launchWhatsApp('919876543210'),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Business Hours
                   Card(
                     elevation: 2,
@@ -156,7 +153,10 @@ class HelpSupportScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _buildTimeRow('Monday - Saturday', '6:00 AM - 10:00 PM'),
+                          _buildTimeRow(
+                            'Monday - Saturday',
+                            '6:00 AM - 10:00 PM',
+                          ),
                           _buildTimeRow('Sunday', '6:00 AM - 8:00 PM'),
                           const SizedBox(height: 12),
                           Container(
@@ -189,9 +189,9 @@ class HelpSupportScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Address
                   Card(
                     elevation: 2,
@@ -258,9 +258,7 @@ class HelpSupportScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
@@ -274,11 +272,7 @@ class HelpSupportScreen extends StatelessWidget {
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -324,22 +318,29 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
+  // --- FIXED: Wrapped in Expanded so the right-side text wraps instead of overflowing ---
   Widget _buildTimeRow(String day, String time) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align to top if texts wrap
         children: [
-          Text(
-            day,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
+          Expanded(
+            flex: 3,
+            child: Text(
+              day,
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Text(
-            time,
-            style: TextStyle(
-              color: Colors.grey.shade600,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: Text(
+              time,
+              textAlign: TextAlign.right, // Keep time aligned to the right
+              style: TextStyle(color: Colors.grey.shade600),
             ),
           ),
         ],

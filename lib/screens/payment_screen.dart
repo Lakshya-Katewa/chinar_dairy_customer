@@ -32,6 +32,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     _paymentService.initialize();
+
+    // Ensure the wallet balance is fetched from Firestore as soon as PaymentScreen opens.
+    // This prevents the "0.0 balance" bug if the user bypassed the Wallet Screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final walletProvider = Provider.of<WalletProvider>(
+        context,
+        listen: false,
+      );
+
+      if (authProvider.customer != null) {
+        walletProvider.loadTransactions(authProvider.customer!.id);
+      }
+    });
   }
 
   @override
@@ -88,7 +102,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     if (walletProvider.balance < widget.totalAmount) {
-      _showErrorDialog('Insufficient wallet balance. Please top up your wallet.');
+      _showErrorDialog(
+        'Insufficient wallet balance. Please top up your wallet.',
+      );
       return;
     }
 
@@ -99,13 +115,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
         description: _getPaymentDescription(),
       );
 
-      _handlePaymentSuccess('wallet_${DateTime.now().millisecondsSinceEpoch}', 'wallet');
+      _handlePaymentSuccess(
+        'wallet_${DateTime.now().millisecondsSinceEpoch}',
+        'wallet',
+      );
     } catch (e) {
       _showErrorDialog('Wallet payment failed: $e');
     }
   }
 
-  Future<void> _handlePaymentSuccess(String paymentId, String paymentMethod) async {
+  Future<void> _handlePaymentSuccess(
+    String paymentId,
+    String paymentMethod,
+  ) async {
     try {
       if (widget.paymentType == 'order') {
         await _createOrder(paymentId, paymentMethod);
@@ -138,7 +160,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     cartProvider.clearCart(authProvider.customer!.id);
   }
 
-  Future<void> _createSubscription(String paymentId, String paymentMethod) async {
+  Future<void> _createSubscription(
+    String paymentId,
+    String paymentMethod,
+  ) async {
     // Implement subscription creation logic
     debugPrint('Creating subscription with payment ID: $paymentId');
   }
@@ -172,67 +197,72 @@ class _PaymentScreenState extends State<PaymentScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
-        title: const Text('Payment Successful!'),
-        content: Text(_getSuccessMessage()),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(true); // Return to previous screen with success
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Continue'),
+            icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
+            title: const Text('Payment Successful!'),
+            content: Text(_getSuccessMessage()),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(
+                    context,
+                  ).pop(true); // Return to previous screen with success
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Continue'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        icon: const Icon(Icons.error, color: Colors.red, size: 64),
-        title: const Text('Payment Failed'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(Icons.error, color: Colors.red, size: 64),
+            title: const Text('Payment Failed'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showInfoDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        icon: const Icon(Icons.info, color: Colors.blue, size: 64),
-        title: const Text('Payment Info'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(Icons.info, color: Colors.blue, size: 64),
+            title: const Text('Payment Info'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -326,10 +356,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // Payment Methods
             const Text(
               'Select Payment Method',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             // Razorpay Option
@@ -365,7 +392,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   child: const Icon(Icons.payment, color: Colors.blue),
                 ),
                 activeColor: Theme.of(context).primaryColor,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -385,11 +415,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: RadioListTile<String>(
                 value: 'wallet',
                 groupValue: _selectedPaymentMethod,
-                onChanged: widget.paymentType == 'wallet_topup'
-                    ? null
-                    : (value) {
-                        setState(() => _selectedPaymentMethod = value!);
-                      },
+                onChanged:
+                    widget.paymentType == 'wallet_topup'
+                        ? null
+                        : (value) {
+                          setState(() => _selectedPaymentMethod = value!);
+                        },
                 title: Text(
                   'Wallet Balance (₹${walletProvider.balance.toStringAsFixed(2)})',
                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -399,28 +430,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ? 'Pay from your wallet balance'
                       : 'Insufficient balance',
                   style: TextStyle(
-                    color: walletProvider.balance >= widget.totalAmount
-                        ? Colors.green.shade600
-                        : Colors.red.shade600,
+                    color:
+                        walletProvider.balance >= widget.totalAmount
+                            ? Colors.green.shade600
+                            : Colors.red.shade600,
                   ),
                 ),
                 secondary: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: walletProvider.balance >= widget.totalAmount
-                        ? Colors.green.shade50
-                        : Colors.red.shade50,
+                    color:
+                        walletProvider.balance >= widget.totalAmount
+                            ? Colors.green.shade50
+                            : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.account_balance_wallet,
-                    color: walletProvider.balance >= widget.totalAmount
-                        ? Colors.green
-                        : Colors.red,
+                    color:
+                        walletProvider.balance >= widget.totalAmount
+                            ? Colors.green
+                            : Colors.red,
                   ),
                 ),
                 activeColor: Theme.of(context).primaryColor,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
             ),
             const SizedBox(height: 40),
@@ -438,29 +475,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   elevation: 3,
                 ),
-                child: _isProcessing
-                    ? const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                child:
+                    _isProcessing
+                        ? const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
                             ),
+                            SizedBox(width: 12),
+                            Text('Processing...'),
+                          ],
+                        )
+                        : Text(
+                          'Pay ₹${widget.totalAmount.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                          SizedBox(width: 12),
-                          Text('Processing...'),
-                        ],
-                      )
-                    : Text(
-                        'Pay ₹${widget.totalAmount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
               ),
             ),
             const SizedBox(height: 20),

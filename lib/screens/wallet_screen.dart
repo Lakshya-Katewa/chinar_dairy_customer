@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/wallet_provider.dart';
 import '../providers/auth_provider.dart';
+import '../service/payment_service.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -12,23 +13,32 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   final _amountController = TextEditingController();
+  final PaymentService _paymentService = PaymentService();
 
   @override
   void initState() {
     super.initState();
+    _paymentService.initialize();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final walletProvider = Provider.of<WalletProvider>(context, listen: false);
+      final walletProvider = Provider.of<WalletProvider>(
+        context,
+        listen: false,
+      );
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       if (authProvider.customer != null) {
         walletProvider.loadTransactions(authProvider.customer!.id);
-        walletProvider.updateWalletBalance(authProvider.customer!.walletBalance);
+        walletProvider.updateWalletBalance(
+          authProvider.customer!.walletBalance,
+        );
       }
     });
   }
 
   @override
   void dispose() {
+    _paymentService.dispose();
     _amountController.dispose();
     super.dispose();
   }
@@ -36,131 +46,172 @@ class _WalletScreenState extends State<WalletScreen> {
   void _showAddMoneyDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.account_balance_wallet,
-                color: Colors.green.shade700,
-              ),
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            const SizedBox(width: 12),
-            Expanded(child: const Text('Add Money to Wallet')),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Amount',
-                prefixText: '₹ ',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.account_balance_wallet,
+                    color: Colors.green.shade700,
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.green.shade700),
-                ),
-              ),
+                const SizedBox(width: 12),
+                const Expanded(child: Text('Add Money to Wallet')),
+              ],
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'You will be redirected to payment gateway to complete the transaction.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue.shade700,
+                  TextField(
+                    controller: _amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Amount',
+                      prefixText: '₹ ',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.green.shade700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.blue.shade700,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You will be redirected to payment gateway to complete the transaction.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              _amountController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final amount = double.tryParse(_amountController.text);
-              if (amount != null && amount > 0) {
-                _addMoney(amount);
-                Navigator.pop(context);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter a valid amount'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  _amountController.clear();
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
               ),
-            ),
-            child: const Text('Add Money'),
+              ElevatedButton(
+                onPressed: () {
+                  final amount = double.tryParse(_amountController.text);
+                  if (amount != null && amount > 0) {
+                    Navigator.pop(context); // Close dialog first
+                    _addMoney(amount); // Then trigger Razorpay
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid amount'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Add Money'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _addMoney(double amount) {
-    final walletProvider = Provider.of<WalletProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     if (authProvider.customer == null) return;
 
-    try {
-      walletProvider.addMoney(
-        customerId: authProvider.customer!.id,
-        amount: amount,
-        customerName: authProvider.customer!.name,
-        customerEmail: authProvider.customer!.email,
-        customerPhone: authProvider.customer!.phone,
-      );
+    _paymentService.openCheckout(
+      amount: amount,
+      orderId: PaymentService.generateOrderId(),
+      customerName: authProvider.customer!.name,
+      customerEmail: authProvider.customer!.email ?? 'customer@chinardairy.com',
+      customerPhone: authProvider.customer!.phone,
+      description: 'Add money to wallet',
+      onSuccess: (response) async {
+        final walletProvider = Provider.of<WalletProvider>(
+          context,
+          listen: false,
+        );
+        try {
+          await walletProvider.addToWallet(
+            customerId: authProvider.customer!.id,
+            amount: amount,
+            description: 'Wallet top-up',
+            transactionId: response.paymentId ?? 'unknown',
+          );
+          _amountController.clear();
 
-      _amountController.clear();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Money added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to update wallet: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      },
+      onError: (response) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: ${response.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+      onExternalWallet: (response) {
+        debugPrint("External Wallet Selected: ${response.walletName}");
+      },
+    );
   }
 
   @override
@@ -170,8 +221,6 @@ class _WalletScreenState extends State<WalletScreen> {
       body: SafeArea(
         child: Column(
           children: [
-           
-            
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -258,7 +307,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ),
                     ),
-                    
+
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       child: Card(
@@ -301,32 +350,34 @@ class _WalletScreenState extends State<WalletScreen> {
                                 ],
                               ),
                             ),
-                            
+
                             Container(
                               constraints: const BoxConstraints(maxHeight: 400),
                               child: Consumer<WalletProvider>(
                                 builder: (context, walletProvider, child) {
                                   if (walletProvider.isLoading) {
-                                    return Container(
+                                    return const SizedBox(
                                       height: 200,
-                                      child: const Center(
+                                      child: Center(
                                         child: CircularProgressIndicator(),
                                       ),
                                     );
                                   }
 
                                   if (walletProvider.transactions.isEmpty) {
-                                    return Container(
+                                    return SizedBox(
                                       height: 200,
                                       child: Center(
                                         child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Container(
                                               padding: const EdgeInsets.all(16),
                                               decoration: BoxDecoration(
                                                 color: Colors.grey.shade100,
-                                                borderRadius: BorderRadius.circular(20),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
                                               ),
                                               child: Icon(
                                                 Icons.receipt_long,
@@ -360,11 +411,14 @@ class _WalletScreenState extends State<WalletScreen> {
                                   return ListView.builder(
                                     shrinkWrap: true,
                                     padding: const EdgeInsets.only(bottom: 16),
-                                    itemCount: walletProvider.transactions.length,
+                                    itemCount:
+                                        walletProvider.transactions.length,
                                     itemBuilder: (context, index) {
-                                      final transaction = walletProvider.transactions[index];
-                                      final isCredit = transaction.type == 'credit';
-                                      
+                                      final transaction =
+                                          walletProvider.transactions[index];
+                                      final isCredit =
+                                          transaction.type == 'credit';
+
                                       return Container(
                                         margin: const EdgeInsets.symmetric(
                                           horizontal: 16,
@@ -372,26 +426,35 @@ class _WalletScreenState extends State<WalletScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                           border: Border.all(
                                             color: Colors.grey.shade200,
                                           ),
                                         ),
                                         child: ListTile(
-                                          contentPadding: const EdgeInsets.all(16),
+                                          contentPadding: const EdgeInsets.all(
+                                            16,
+                                          ),
                                           leading: Container(
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: isCredit 
-                                                  ? Colors.green.shade100 
-                                                  : Colors.red.shade100,
-                                              borderRadius: BorderRadius.circular(12),
+                                              color:
+                                                  isCredit
+                                                      ? Colors.green.shade100
+                                                      : Colors.red.shade100,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             child: Icon(
-                                              isCredit ? Icons.add : Icons.remove,
-                                              color: isCredit 
-                                                  ? Colors.green.shade700 
-                                                  : Colors.red.shade700,
+                                              isCredit
+                                                  ? Icons.add
+                                                  : Icons.remove,
+                                              color:
+                                                  isCredit
+                                                      ? Colors.green.shade700
+                                                      : Colors.red.shade700,
                                               size: 20,
                                             ),
                                           ),
@@ -413,17 +476,20 @@ class _WalletScreenState extends State<WalletScreen> {
                                               vertical: 6,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: isCredit 
-                                                  ? Colors.green.shade50 
-                                                  : Colors.red.shade50,
-                                              borderRadius: BorderRadius.circular(8),
+                                              color:
+                                                  isCredit
+                                                      ? Colors.green.shade50
+                                                      : Colors.red.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               '${isCredit ? '+' : '-'}₹${transaction.amount.toStringAsFixed(2)}',
                                               style: TextStyle(
-                                                color: isCredit 
-                                                    ? Colors.green.shade700 
-                                                    : Colors.red.shade700,
+                                                color:
+                                                    isCredit
+                                                        ? Colors.green.shade700
+                                                        : Colors.red.shade700,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
                                               ),
@@ -440,7 +506,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 20),
                   ],
                 ),

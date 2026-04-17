@@ -13,7 +13,8 @@ class ProductCard extends StatefulWidget {
   State<ProductCard> createState() => _ProductCardState();
 }
 
-class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin {
+class _ProductCardState extends State<ProductCard>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _isAdding = false;
@@ -25,13 +26,9 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.95,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -42,7 +39,7 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
 
   Future<void> _addToCart() async {
     if (_isAdding) return;
-    
+
     setState(() {
       _isAdding = true;
     });
@@ -55,7 +52,7 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     if (authProvider.customer == null) {
-       if (mounted) {
+      if (mounted) {
         setState(() {
           _isAdding = false;
         });
@@ -108,11 +105,7 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
   }
 
   void _showProductDetails() {
-    Navigator.pushNamed(
-      context,
-      '/product-detail',
-      arguments: widget.product,
-    );
+    Navigator.pushNamed(context, '/product-detail', arguments: widget.product);
   }
 
   void _showSubscriptionOptions() {
@@ -126,12 +119,7 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
       );
       return;
     }
-
-    Navigator.pushNamed(
-      context,
-      '/subscription',
-      arguments: widget.product,
-    );
+    Navigator.pushNamed(context, '/subscription', arguments: widget.product);
   }
 
   @override
@@ -159,14 +147,14 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Image with Type Badge
+                  // Product Image
                   Expanded(
                     flex: 3,
                     child: Stack(
                       children: [
                         Container(
                           width: double.infinity,
-                           decoration: const BoxDecoration(
+                          decoration: const BoxDecoration(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(16),
                             ),
@@ -175,23 +163,23 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
                             borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(16),
                             ),
-                            child: widget.product.imageUrl != null
-                                ? Image.network(
-                                    widget.product.imageUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Icon(
-                                        Icons.local_drink,
-                                        size: 60,
-                                        color: Colors.grey.shade400,
-                                      );
-                                    },
-                                  )
-                                : Icon(
-                                    Icons.local_drink,
-                                    size: 60,
-                                    color: Colors.grey.shade400,
-                                  ),
+                            child:
+                                widget.product.imageUrl != null
+                                    ? Image.network(
+                                      widget.product.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (_, __, ___) => Icon(
+                                            Icons.local_drink,
+                                            size: 60,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                    )
+                                    : Icon(
+                                      Icons.local_drink,
+                                      size: 60,
+                                      color: Colors.grey.shade400,
+                                    ),
                           ),
                         ),
                         // Product Type Badge
@@ -218,59 +206,34 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
                               ),
                             ),
                           ),
-                        if (widget.product.canSubscribe)
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Subscribe',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),
                   // Product Details
                   Expanded(
-                    flex: 2,
+                    flex: 3, // Increased flex to give buttons more room
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Product Name & Price
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                                Text(
+                              Text(
                                 widget.product.name,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   height: 1.2,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
-                              // Price
                               Text(
-                                '₹${widget.product.price.toStringAsFixed(2)} / ${widget.product.unitText}',
+                                '₹${widget.product.price.toStringAsFixed(0)} / ${widget.product.unitText}',
                                 style: TextStyle(
                                   color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.bold,
@@ -279,106 +242,75 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
                               ),
                             ],
                           ),
-                          
-                          // Buttons
-                          if (widget.product.isOneTimeOnly)
-                            SizedBox(
-                              width: double.infinity,
-                              height: 34,
-                              child: ElevatedButton(
-                                onPressed: _isAdding ? null : _addToCart,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Theme.of(context).primaryColor,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+
+                          // --- FIXED: STACKED BUTTONS VERTICALLY ---
+                          Column(
+                            children: [
+                              if (widget.product.canSubscribe)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 28,
+                                  child: OutlinedButton(
+                                    onPressed: _showSubscriptionOptions,
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          Theme.of(context).primaryColor,
+                                      side: BorderSide(
+                                        color: Theme.of(context).primaryColor,
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    child: const Text(
+                                      'Subscribe',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  elevation: 2,
                                 ),
-                                child: _isAdding
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Buy Once',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                              ),
-                            )
-                          else
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 34,
-                                    child: ElevatedButton(
-                                      onPressed: _isAdding ? null : _addToCart,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context).primaryColor,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                                        elevation: 2,
-                                      ),
-                                      child: _isAdding
+                              if (widget.product.canSubscribe)
+                                const SizedBox(height: 4),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 28,
+                                child: ElevatedButton(
+                                  onPressed: _isAdding ? null : _addToCart,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    elevation: 0,
+                                  ),
+                                  child:
+                                      _isAdding
                                           ? const SizedBox(
-                                              width: 14,
-                                              height: 14,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : const Text(
-                                              'Buy Once',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
                                             ),
-                                    ),
-                                  ),
+                                          )
+                                          : const Text(
+                                            'Buy Once',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 34,
-                                    child: OutlinedButton(
-                                      onPressed: _showSubscriptionOptions,
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Theme.of(context).primaryColor,
-                                        side: BorderSide(
-                                          color: Theme.of(context).primaryColor,
-                                          width: 1.5,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      ),
-                                      child: const Text(
-                                        'Subscribe',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

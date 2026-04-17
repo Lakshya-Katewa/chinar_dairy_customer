@@ -3,8 +3,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class PaymentService {
   late Razorpay _razorpay;
-  
-  // Callback functions
+
   Function(PaymentSuccessResponse)? _onSuccess;
   Function(PaymentFailureResponse)? _onError;
   Function(ExternalWalletResponse)? _onExternalWallet;
@@ -27,62 +26,54 @@ class PaymentService {
     required Function(PaymentFailureResponse) onError,
     required Function(ExternalWalletResponse) onExternalWallet,
   }) async {
-    // Store callbacks
     _onSuccess = onSuccess;
     _onError = onError;
     _onExternalWallet = onExternalWallet;
 
+    // Ensure amount is at least 100 paise (₹1.00)
+    int amountInPaise = (amount * 100).toInt();
+    if (amountInPaise < 100) amountInPaise = 100;
+
     var options = {
-      'key': 'rzp_test_0UJcJkVMPrEqog', // Replace with your actual Razorpay key
-      'amount': (amount * 100).toInt(), // Amount in paise
+      'key': 'rzp_test_SeVEtAoJ3Trffh', // Correct confirmed key
+      'amount': amountInPaise,
       'name': 'Chinar Dairy',
-      'order_id': orderId,
       'description': description,
-      'timeout': 300, // 5 minutes
+      'retry': {'enabled': true, 'max_count': 1},
+      'send_sms_hash': true,
       'prefill': {
         'contact': customerPhone,
         'email': customerEmail,
         'name': customerName,
       },
-      'theme': {
-        'color': '#4CAF50'
+      'external': {
+        'wallets': ['paytm'],
       },
-      'modal': {
-        'ondismiss': () {
-          debugPrint('Payment cancelled by user');
-        }
-      }
     };
 
     try {
       _razorpay.open(options);
     } catch (e) {
       debugPrint('Error opening Razorpay: $e');
-      _onError?.call(PaymentFailureResponse(
-        1, // code
-        'Failed to open payment gateway', // message  
-        'PAYMENT_GATEWAY_ERROR' as Map?, // error
-      ));
     }
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    debugPrint('Payment Success: ${response.paymentId}');
+    debugPrint("RAZORPAY SUCCESS: ${response.paymentId}");
     _onSuccess?.call(response);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    debugPrint('Payment Error: ${response.code} - ${response.message}');
+    debugPrint('Payment Failed: ${response.code} - ${response.message}');
     _onError?.call(response);
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
-    debugPrint('External Wallet: ${response.walletName}');
     _onExternalWallet?.call(response);
   }
 
   static String generateOrderId() {
-    return 'order_${DateTime.now().millisecondsSinceEpoch}';
+    return 'test_order_${DateTime.now().millisecondsSinceEpoch}';
   }
 
   void dispose() {

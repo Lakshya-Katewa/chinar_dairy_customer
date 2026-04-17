@@ -24,10 +24,15 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   Future<void> _loadReferralHistory() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final referralProvider = Provider.of<ReferralProvider>(context, listen: false);
-    
+    final referralProvider = Provider.of<ReferralProvider>(
+      context,
+      listen: false,
+    );
+
     if (authProvider.customer != null) {
-      final history = await referralProvider.getReferralHistory(authProvider.customer!.referralCode);
+      final history = await referralProvider.getReferralHistory(
+        authProvider.customer!.referralCode,
+      );
       setState(() {
         _referralHistory = history;
         _isLoading = false;
@@ -48,7 +53,7 @@ Use my referral code: $referralCode
 
 Download the app and start enjoying fresh dairy products daily.
       ''';
-      
+
       Share.share(message);
     }
   }
@@ -56,7 +61,9 @@ Download the app and start enjoying fresh dairy products daily.
   void _copyReferralCode() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.customer != null) {
-      Clipboard.setData(ClipboardData(text: authProvider.customer!.referralCode));
+      Clipboard.setData(
+        ClipboardData(text: authProvider.customer!.referralCode),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Referral code copied to clipboard!'),
@@ -82,7 +89,7 @@ Download the app and start enjoying fresh dairy products daily.
           }
 
           final customer = authProvider.customer!;
-          
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -120,10 +127,7 @@ Download the app and start enjoying fresh dairy products daily.
                       const SizedBox(height: 8),
                       const Text(
                         'Your friend gets ₹50 too when they place their first order!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -162,10 +166,19 @@ Download the app and start enjoying fresh dairy products daily.
                             child: ElevatedButton.icon(
                               onPressed: _copyReferralCode,
                               icon: const Icon(Icons.copy, size: 18),
-                              label: const Text('Copy Code'),
+                              // --- FIXED: Wrapped in FittedBox to prevent 2 lines ---
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Copy Code', maxLines: 1),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.green.shade700,
+                                // --- FIXED: Reduced horizontal padding ---
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -177,10 +190,19 @@ Download the app and start enjoying fresh dairy products daily.
                             child: ElevatedButton.icon(
                               onPressed: _shareReferralCode,
                               icon: const Icon(Icons.share, size: 18),
-                              label: const Text('Share'),
+                              // --- FIXED: Wrapped in FittedBox to prevent 2 lines ---
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text('Share', maxLines: 1),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.green.shade700,
+                                // --- FIXED: Reduced horizontal padding ---
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 12,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -192,9 +214,9 @@ Download the app and start enjoying fresh dairy products daily.
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Stats Card
                 Card(
                   child: Padding(
@@ -252,98 +274,97 @@ Download the app and start enjoying fresh dairy products daily.
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // How it works
                 const Text(
                   'How it works',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                
+
                 _buildHowItWorksStep(
                   1,
                   'Share your referral code',
                   'Send your unique code to friends via WhatsApp, SMS, or social media',
                   Icons.share,
                 ),
-                
+
                 _buildHowItWorksStep(
                   2,
                   'Friend signs up',
                   'Your friend downloads the app and enters your referral code during registration',
                   Icons.person_add,
                 ),
-                
+
                 _buildHowItWorksStep(
                   3,
                   'Both get rewarded',
                   'You both get ₹50 in your wallet after their first order is delivered',
                   Icons.celebration,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Referral History
                 if (_referralHistory.isNotEmpty) ...[
                   const Text(
                     'Referral History',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   Card(
                     child: Column(
-                      children: _referralHistory.map((referral) {
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green.shade100,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                          title: Text(referral['name']),
-                          subtitle: Text(
-                            'Joined on ${referral['joinDate'].day}/${referral['joinDate'].month}/${referral['joinDate'].year}',
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: referral['rewardClaimed'] 
-                                  ? Colors.green.shade100 
-                                  : Colors.orange.shade100,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              referral['rewardClaimed'] ? '₹50 Earned' : 'Pending',
-                              style: TextStyle(
-                                color: referral['rewardClaimed'] 
-                                    ? Colors.green.shade700 
-                                    : Colors.orange.shade700,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                      children:
+                          _referralHistory.map((referral) {
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Colors.green.shade100,
+                                child: Icon(
+                                  Icons.person,
+                                  color: Colors.green.shade700,
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                              title: Text(referral['name']),
+                              subtitle: Text(
+                                'Joined on ${referral['joinDate'].day}/${referral['joinDate'].month}/${referral['joinDate'].year}',
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      referral['rewardClaimed']
+                                          ? Colors.green.shade100
+                                          : Colors.orange.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  referral['rewardClaimed']
+                                      ? '₹50 Earned'
+                                      : 'Pending',
+                                  style: TextStyle(
+                                    color:
+                                        referral['rewardClaimed']
+                                            ? Colors.green.shade700
+                                            : Colors.orange.shade700,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                     ),
                   ),
                 ],
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Terms
                 Card(
                   child: Padding(
@@ -359,11 +380,21 @@ Download the app and start enjoying fresh dairy products daily.
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildTermsPoint('• Referral reward is credited after friend\'s first order is delivered'),
-                        _buildTermsPoint('• Maximum 10 successful referrals per user'),
-                        _buildTermsPoint('• Referral code cannot be used by the same user'),
-                        _buildTermsPoint('• Rewards are non-transferable and non-refundable'),
-                        _buildTermsPoint('• Chinar Dairy reserves the right to modify terms'),
+                        _buildTermsPoint(
+                          '• Referral reward is credited after friend\'s first order is delivered',
+                        ),
+                        _buildTermsPoint(
+                          '• Maximum 10 successful referrals per user',
+                        ),
+                        _buildTermsPoint(
+                          '• Referral code cannot be used by the same user',
+                        ),
+                        _buildTermsPoint(
+                          '• Rewards are non-transferable and non-refundable',
+                        ),
+                        _buildTermsPoint(
+                          '• Chinar Dairy reserves the right to modify terms',
+                        ),
                       ],
                     ),
                   ),
@@ -376,7 +407,12 @@ Download the app and start enjoying fresh dairy products daily.
     );
   }
 
-  Widget _buildHowItWorksStep(int step, String title, String description, IconData icon) {
+  Widget _buildHowItWorksStep(
+    int step,
+    String title,
+    String description,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -420,10 +456,7 @@ Download the app and start enjoying fresh dairy products daily.
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                 ),
               ],
             ),
@@ -438,10 +471,7 @@ Download the app and start enjoying fresh dairy products daily.
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 12,
-        ),
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
       ),
     );
   }

@@ -12,9 +12,11 @@ class CartItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Product Image
             Container(
@@ -24,28 +26,26 @@ class CartItemCard extends StatelessWidget {
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: cartItem.imageUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        cartItem.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.local_drink,
-                            color: Colors.grey.shade400,
-                          );
-                        },
-                      ),
-                    )
-                  : Icon(
-                      Icons.local_drink,
-                      color: Colors.grey.shade400,
-                    ),
+              child:
+                  cartItem.imageUrl != null
+                      ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          cartItem.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.local_drink,
+                              color: Colors.grey.shade400,
+                            );
+                          },
+                        ),
+                      )
+                      : Icon(Icons.local_drink, color: Colors.grey.shade400),
             ),
-            const SizedBox(width: 16),
-            
-            // Product Details
+            const SizedBox(width: 12),
+
+            // Product Details - WRAPPED IN EXPANDED TO PREVENT OVERFLOW
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,81 +54,118 @@ class CartItemCard extends StatelessWidget {
                     cartItem.productName,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 15,
                     ),
+                    maxLines: 2, // Forces wrap
+                    overflow: TextOverflow.ellipsis, // Adds ... if too long
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '₹${cartItem.price.toStringAsFixed(2)} per ${cartItem.unit}',
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Total: ₹${cartItem.totalPrice.toStringAsFixed(2)}',
                     style: TextStyle(
                       color: Colors.green.shade700,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 15,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            
-            // Quantity Controls
+
+            const SizedBox(width: 8),
+
+            // Quantity Controls - COMPACT CUSTOM DESIGN
             Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                        cartProvider.updateQuantity(cartItem.id, cartItem.quantity - 1);
-                      },
-                      icon: const Icon(Icons.remove),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        minimumSize: const Size(32, 32),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          final cp = Provider.of<CartProvider>(
+                            context,
+                            listen: false,
+                          );
+                          cp.updateQuantity(cartItem.id, cartItem.quantity - 1);
+                        },
+                        borderRadius: const BorderRadius.horizontal(
+                          left: Radius.circular(8),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          child: Icon(Icons.remove, size: 16),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${cartItem.quantity.toInt()}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          '${cartItem.quantity.toInt()}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      onPressed: () {
-                        final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                        cartProvider.updateQuantity(cartItem.id, cartItem.quantity + 1);
-                      },
-                      icon: const Icon(Icons.add),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        minimumSize: const Size(32, 32),
+                      InkWell(
+                        onTap: () {
+                          final cp = Provider.of<CartProvider>(
+                            context,
+                            listen: false,
+                          );
+                          cp.updateQuantity(cartItem.id, cartItem.quantity + 1);
+                        },
+                        borderRadius: const BorderRadius.horizontal(
+                          right: Radius.circular(8),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          child: Icon(Icons.add, size: 16),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
-                    final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                    cartProvider.removeFromCart(cartItem.id);
+                    final cp = Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    );
+                    cp.removeFromCart(cartItem.id);
                   },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: Text(
                     'Remove',
-                    style: TextStyle(
-                      color: Colors.red.shade600,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.red.shade600, fontSize: 12),
                   ),
                 ),
               ],

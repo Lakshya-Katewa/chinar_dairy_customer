@@ -76,7 +76,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _placeOrder() async {
-    // FIX 3: Immediately lock the button to prevent double-taps firing twice
     if (_isPlacingOrder) return;
     setState(() => _isPlacingOrder = true);
 
@@ -166,7 +165,6 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
-    // Show un-dismissible loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -187,21 +185,17 @@ class _CartScreenState extends State<CartScreen> {
       await authProvider.refreshCustomerData();
 
       if (mounted) {
-        // FIX 2: Safely pop the loading dialog using rootNavigator
         Navigator.of(context, rootNavigator: true).pop();
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Order placed successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-
         Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        // Safely pop the loading dialog on error
         Navigator.of(context, rootNavigator: true).pop();
         setState(() => _isPlacingOrder = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -382,22 +376,30 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 child: Column(
                   children: [
+                    // --- FIXED: WRAPPED IN FLEXIBLE & FITTEDBOX ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Total Amount',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        const Expanded(
+                          child: Text(
+                            'Total Amount',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        Text(
-                          '₹${cartProvider.totalAmount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700,
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '₹${cartProvider.totalAmount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
                           ),
                         ),
                       ],

@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
   final PageController _pageController = PageController();
 
   final List<String> _titles = const [
-    'ChinarAgro', // RENAMED
+    'ChinarAgro',
     'My Orders',
     'My Subscriptions',
     'My Wallet',
@@ -182,6 +182,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       drawer: const AppDrawer(),
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -262,17 +263,27 @@ class HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<HomeScreenContent> {
   final _searchController = TextEditingController();
 
+  // --- FIXED: Cache the stream so it doesn't rebuild and blink when typing ---
+  late Stream<QuerySnapshot> _bannersStream;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize the stream ONCE
+    _bannersStream =
+        FirebaseFirestore.instance
+            .collection('banners')
+            .where('isActive', isEqualTo: true)
+            .snapshots();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<ProductProvider>(context, listen: false);
       provider.searchProducts('');
       provider.filterByCategory('All');
     });
-    _searchController.addListener(() {
-      setState(() {});
-    });
+
+    // --- FIXED: Removed the global setState listener that was forcing the whole screen to rebuild ---
   }
 
   @override
@@ -283,11 +294,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   Widget _buildBanners() {
     return StreamBuilder<QuerySnapshot>(
-      stream:
-          FirebaseFirestore.instance
-              .collection('banners')
-              .where('isActive', isEqualTo: true)
-              .snapshots(),
+      stream: _bannersStream, // --- FIXED: Using the cached stream
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Shimmer.fromColors(
@@ -298,7 +305,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 vertical: 16.0,
                 horizontal: 16.0,
               ),
-              // Height matches the new aspect ratio below
               height: (MediaQuery.of(context).size.width - 32) / 1.5,
               width: double.infinity,
               decoration: BoxDecoration(
@@ -339,12 +345,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // FIX 6: Image fit changed to contain, wrapped in white background
                       Container(
                         color: Colors.white,
                         child: Image.network(
                           banner.imageUrl,
-                          fit: BoxFit.contain, // Prevents cropping
+                          fit: BoxFit.contain,
                           errorBuilder:
                               (_, __, ___) => Container(
                                 color: Colors.grey.shade200,
@@ -424,10 +429,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           },
           options: CarouselOptions(
             autoPlay: banners.length > 1,
-            // FIX 6: Changed from 1.8 to 1.5 to make banner 20% taller/bigger
             aspectRatio: 1.5,
             enlargeCenterPage: true,
-            viewportFraction: 0.95, // Made wider to utilize screen width
+            viewportFraction: 0.95,
           ),
         );
       },
@@ -576,7 +580,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  // FIX 12: This widget is now placed at the bottom of the Slivers
   Widget _buildWhyChooseUsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -673,35 +676,44 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   ),
                 ],
               ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search for milk, paneer, curd...',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                  suffixIcon:
-                      _searchController.text.isNotEmpty
-                          ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              Provider.of<ProductProvider>(
-                                context,
-                                listen: false,
-                              ).searchProducts('');
-                            },
-                          )
-                          : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                onChanged: (value) {
-                  Provider.of<ProductProvider>(
-                    context,
-                    listen: false,
-                  ).searchProducts(value);
+              // --- FIXED: Wrap only the TextField in a ValueListenableBuilder ---
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search for milk, paneer, curd...',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey.shade600,
+                      ),
+                      suffixIcon:
+                          value.text.isNotEmpty
+                              ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  Provider.of<ProductProvider>(
+                                    context,
+                                    listen: false,
+                                  ).searchProducts('');
+                                },
+                              )
+                              : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                    ),
+                    onChanged: (textValue) {
+                      Provider.of<ProductProvider>(
+                        context,
+                        listen: false,
+                      ).searchProducts(textValue);
+                    },
+                  );
                 },
               ),
             ),
@@ -741,9 +753,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               }
               if (productProvider.products.isEmpty) {
                 return SliverFillRemaining(
+                  hasScrollBody: false,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.search_off,
@@ -780,7 +794,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               );
             },
           ),
-          // FIX 12: Why Choose Us moved here to the bottom of the page
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
           SliverToBoxAdapter(child: _buildWhyChooseUsSection()),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
