@@ -76,49 +76,53 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _placeOrder() async {
+    // --- 1. Clear any existing SnackBars immediately to reset error state ---
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
     if (_isPlacingOrder) return;
-    setState(() => _isPlacingOrder = true);
 
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final orderProvider = Provider.of<OrderProvider>(context, listen: false);
 
     if (cartProvider.cartItems.isEmpty) {
-      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Your cart is empty'),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
       );
       return;
     }
 
     if (selectedAddress == null) {
-      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a delivery address'),
           backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
       );
       _selectAddress();
       return;
     }
 
-    if (authProvider.customer == null) {
-      setState(() => _isPlacingOrder = false);
-      return;
-    }
+    if (authProvider.customer == null) return;
+
+    // --- 2. Force refresh user data from Firestore to get updated wallet balance ---
+    await authProvider.refreshCustomerData();
 
     if (authProvider.customer!.walletBalance < cartProvider.totalAmount) {
-      setState(() => _isPlacingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Insufficient wallet balance. Add ₹${(cartProvider.totalAmount - authProvider.customer!.walletBalance).toStringAsFixed(2)} to continue.',
           ),
           backgroundColor: Colors.red,
+          duration: const Duration(
+            seconds: 4,
+          ), // --- 3. Added auto-dismiss duration ---
           action: SnackBarAction(
             label: 'Add Money',
             textColor: Colors.white,
@@ -160,10 +164,9 @@ class _CartScreenState extends State<CartScreen> {
           ),
     );
 
-    if (confirmed != true) {
-      setState(() => _isPlacingOrder = false);
-      return;
-    }
+    if (confirmed != true) return;
+
+    setState(() => _isPlacingOrder = true);
 
     showDialog(
       context: context,
@@ -190,6 +193,7 @@ class _CartScreenState extends State<CartScreen> {
           const SnackBar(
             content: Text('Order placed successfully!'),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
           ),
         );
         Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
@@ -202,6 +206,7 @@ class _CartScreenState extends State<CartScreen> {
           SnackBar(
             content: Text('Error placing order: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -376,7 +381,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 child: Column(
                   children: [
-                    // --- FIXED: WRAPPED IN FLEXIBLE & FITTEDBOX ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
