@@ -6,7 +6,7 @@ import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../providers/auth_provider.dart';
 // Note: You might need to import your CartItem model if it's in a separate file
-// import '../models/cart_item.dart'; 
+// import '../models/cart_item.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({super.key});
@@ -64,10 +64,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -80,11 +77,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showSubscriptionOptions() {
-    Navigator.pushNamed(
-      context,
-      '/subscription',
-      arguments: product,
-    );
+    Navigator.pushNamed(context, '/subscription', arguments: product);
   }
 
   // --- UPDATED: WIDGET FOR THE PERSISTENT CART BUTTON ---
@@ -95,13 +88,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (product == null) {
           return const SizedBox.shrink(); // Don't show if product isn't loaded
         }
-        
+
         // Find if the current product is in the cart
-        final indexInCart = cartProvider.items.indexWhere((item) => item.productId == product!.id);
+        final indexInCart = cartProvider.items.indexWhere(
+          (item) => item.productId == product!.id,
+        );
         final bool isVisible = indexInCart != -1;
 
         // Get the quantity of this specific item in the cart
-        final quantityInCart = isVisible ? cartProvider.items[indexInCart].quantity : 0;
+        final quantityInCart =
+            isVisible ? cartProvider.items[indexInCart].quantity : 0;
 
         return AnimatedPositioned(
           duration: const Duration(milliseconds: 300),
@@ -135,9 +131,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (product == null) {
-      return const Scaffold(
-        body: Center(child: Text('Product not found')),
-      );
+      return const Scaffold(body: Center(child: Text('Product not found')));
     }
 
     return Scaffold(
@@ -156,23 +150,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   height: 300,
                   width: double.infinity,
                   color: Colors.grey.shade100,
-                  child: product!.imageUrl != null
-                      ? Image.network(
-                          product!.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.local_drink,
-                              size: 100,
-                              color: Colors.grey.shade400,
-                            );
-                          },
-                        )
-                      : Icon(
-                          Icons.local_drink,
-                          size: 100,
-                          color: Colors.grey.shade400,
-                        ),
+                  child:
+                      product!.imageUrl != null
+                          ? Image.network(
+                            product!.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.local_drink,
+                                size: 100,
+                                color: Colors.grey.shade400,
+                              );
+                            },
+                          )
+                          : Icon(
+                            Icons.local_drink,
+                            size: 100,
+                            color: Colors.grey.shade400,
+                          ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(24),
@@ -181,9 +176,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     children: [
                       Text(
                         product!.name,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -197,9 +191,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 16),
                       Text(
                         'Description',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -209,17 +202,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 24),
                       Text(
                         'Quantity',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
                           IconButton(
-                            onPressed: quantity > 1
-                                ? () => setState(() => quantity--)
-                                : null,
+                            onPressed:
+                                quantity > 0.5
+                                    ? () => setState(() => quantity -= 0.5)
+                                    : null,
                             icon: const Icon(Icons.remove),
                             style: IconButton.styleFrom(
                               backgroundColor: Colors.grey.shade200,
@@ -227,7 +220,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           const SizedBox(width: 16),
                           Text(
-                            '${quantity.toInt()} ${product!.unitText}',
+                            quantity % 1 == 0
+                                ? '${quantity.toInt()} ${product!.unitText}'
+                                : '${quantity.toStringAsFixed(1)} ${product!.unitText}',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -235,7 +230,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                           const SizedBox(width: 16),
                           IconButton(
-                            onPressed: () => setState(() => quantity++),
+                            onPressed: () => setState(() => quantity += 0.5),
                             icon: const Icon(Icons.add),
                             style: IconButton.styleFrom(
                               backgroundColor: Colors.grey.shade200,
@@ -257,19 +252,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: _isAdding
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                  )
-                                : Text(
-                                    'Buy Once - ₹${(product!.price * quantity).toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                            child:
+                                _isAdding
+                                    ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                    : Text(
+                                      'Buy Once - ₹${(product!.price * quantity).toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
                           ),
                         )
                       else
@@ -281,8 +280,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   onPressed: _showSubscriptionOptions,
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.green.shade700,
-                                    side: BorderSide(color: Colors.green.shade700, width: 1.5),
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    side: BorderSide(
+                                      color: Colors.green.shade700,
+                                      width: 1.5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -296,31 +300,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                            if (product!.canSubscribe) const SizedBox(width: 16),
+                            if (product!.canSubscribe)
+                              const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _isAdding ? null : _addToCart,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green.shade700,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: _isAdding
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                      )
-                                    : const Text(
-                                        'Buy Once',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                child:
+                                    _isAdding
+                                        ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 3,
+                                          ),
+                                        )
+                                        : const Text(
+                                          'Buy Once',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
                               ),
                             ),
                           ],
@@ -328,7 +339,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 100), 
+                const SizedBox(height: 100),
               ],
             ),
           ),

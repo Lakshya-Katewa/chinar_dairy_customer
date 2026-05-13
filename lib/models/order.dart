@@ -13,7 +13,7 @@ enum OrderStatus {
 class OrderItem {
   final String productId;
   final String productName;
-  final int quantity;
+  final double quantity;
   final double price;
   final String unit;
   final String? imageUrl;
@@ -44,7 +44,7 @@ class OrderItem {
     return OrderItem(
       productId: map['productId'] ?? '',
       productName: map['productName'] ?? '',
-      quantity: (map['quantity'] ?? 0).toInt(),
+      quantity: (map['quantity'] ?? 0).toDouble(),
       price: (map['price'] ?? 0.0).toDouble(),
       unit: map['unit'] ?? '',
       imageUrl: map['imageUrl'],
@@ -87,7 +87,6 @@ class Order {
     this.deliverySlot,
     this.deliveredAt,
     required this.createdAt,
-
   });
 
   Map<String, dynamic> toMap() {
@@ -112,15 +111,16 @@ class Order {
   factory Order.fromFirestore(DocumentSnapshot doc) {
     try {
       final data = doc.data() as Map<String, dynamic>;
-      
+
       // Debug print the raw data
       print('🔍 Parsing order ${doc.id}');
       print('📄 Raw data: $data');
-      
+
       // Parse delivery address with fallback values
       DetailedAddress deliveryAddress;
       try {
-        final addressData = data['deliveryAddress'] as Map<String, dynamic>? ?? {};
+        final addressData =
+            data['deliveryAddress'] as Map<String, dynamic>? ?? {};
         deliveryAddress = DetailedAddress(
           houseNumber: addressData['houseNumber'] ?? '',
           landmark: addressData['landmark'] ?? '',
@@ -128,7 +128,9 @@ class Order {
           latitude: (addressData['latitude'] ?? 0.0).toDouble(),
           longitude: (addressData['longitude'] ?? 0.0).toDouble(),
           fullAddress: addressData['fullAddress'] ?? '',
-          instructions: addressData['instructions'], street: '', city: '',
+          instructions: addressData['instructions'],
+          street: '',
+          city: '',
         );
       } catch (e) {
         print('⚠️ Error parsing delivery address: $e');
@@ -140,22 +142,25 @@ class Order {
           latitude: 0.0,
           longitude: 0.0,
           fullAddress: 'Address not available',
-          instructions: null, street: '', city: '',
+          instructions: null,
+          street: '',
+          city: '',
         );
       }
-      
+
       // Parse items with error handling
       List<OrderItem> items = [];
       try {
         final itemsData = data['items'] as List<dynamic>? ?? [];
-        items = itemsData
-            .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
-            .toList();
+        items =
+            itemsData
+                .map((item) => OrderItem.fromMap(item as Map<String, dynamic>))
+                .toList();
       } catch (e) {
         print('⚠️ Error parsing items: $e');
         items = [];
       }
-      
+
       final order = Order(
         id: doc.id,
         customerId: data['customerId'] ?? '',
@@ -165,19 +170,21 @@ class Order {
         totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
         status: _parseOrderStatus(data['status']),
         deliveryAddress: deliveryAddress,
-        orderDate: (data['orderDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        deliveryDate: (data['deliveryDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        orderDate:
+            (data['orderDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        deliveryDate:
+            (data['deliveryDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
         notes: data['notes'],
         paymentMethod: data['paymentMethod'],
         paymentId: data['paymentId'],
         deliverySlot: data['deliverySlot'],
-        createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        deliveredAt: (data['deliveredAt'] as Timestamp?)?.toDate(), 
+        createdAt:
+            (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        deliveredAt: (data['deliveredAt'] as Timestamp?)?.toDate(),
       );
-      
+
       print('✅ Successfully parsed order: ${order.id}');
       return order;
-      
     } catch (e) {
       print('❌ Error parsing order ${doc.id}: $e');
       rethrow;
@@ -236,7 +243,7 @@ class Order {
     String? paymentId,
     String? deliverySlot,
     DateTime? createdAt,
-     DateTime? deliveredAt,
+    DateTime? deliveredAt,
   }) {
     return Order(
       id: id ?? this.id,
@@ -254,7 +261,7 @@ class Order {
       paymentId: paymentId ?? this.paymentId,
       deliverySlot: deliverySlot ?? this.deliverySlot,
       createdAt: createdAt ?? this.createdAt,
-       deliveredAt: deliveredAt ?? this.deliveredAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 }

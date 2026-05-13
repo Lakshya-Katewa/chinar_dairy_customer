@@ -64,6 +64,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           channel.name,
           channelDescription: channel.description,
           icon: '@mipmap/ic_launcher',
+          timeoutAfter: 10000,
+          ongoing: false, // Allows the user to swipe it away
+          autoCancel: true, // Removes it automatically when tapped
         ),
       ),
     );
@@ -132,6 +135,8 @@ void main() async {
             channel.name,
             channelDescription: channel.description,
             icon: '@mipmap/ic_launcher',
+            ongoing: false, // Allows the user to swipe it away
+            autoCancel: true, // Removes it automatically when tapped
           ),
         ),
       );

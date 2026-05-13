@@ -147,9 +147,9 @@ class _ProductCardState extends State<ProductCard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Image
+                  // 1. Image Section - Made slightly smaller to give room to buttons
                   Expanded(
-                    flex: 3,
+                    flex: 12, // Controlled ratio
                     child: Stack(
                       children: [
                         Container(
@@ -171,36 +171,35 @@ class _ProductCardState extends State<ProductCard>
                                       errorBuilder:
                                           (_, __, ___) => Icon(
                                             Icons.local_drink,
-                                            size: 60,
+                                            size: 40,
                                             color: Colors.grey.shade400,
                                           ),
                                     )
                                     : Icon(
                                       Icons.local_drink,
-                                      size: 60,
+                                      size: 40,
                                       color: Colors.grey.shade400,
                                     ),
                           ),
                         ),
-                        // Product Type Badge
                         if (widget.product.isOneTimeOnly)
                           Positioned(
-                            top: 8,
-                            right: 8,
+                            top: 6,
+                            right: 6,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                                horizontal: 6,
+                                vertical: 2,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.orange,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 'One-time',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -209,107 +208,99 @@ class _ProductCardState extends State<ProductCard>
                       ],
                     ),
                   ),
-                  // Product Details
+
+                  // 2. Details Section
                   Expanded(
-                    flex: 3, // Increased flex to give buttons more room
+                    flex: 13, // Increased flex to prevent button overflow
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                      padding: const EdgeInsets.all(8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.product.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  height: 1.2,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '₹${widget.product.price.toStringAsFixed(0)} / ${widget.product.unitText}',
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                          // Product Name
+                          Text(
+                            widget.product.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              height: 1.1,
+                            ),
+                            maxLines: 1, // Restricted to 1 line to save space
+                            overflow: TextOverflow.ellipsis,
                           ),
-
-                          // --- FIXED: STACKED BUTTONS VERTICALLY ---
-                          Column(
-                            children: [
-                              if (widget.product.canSubscribe)
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 28,
-                                  child: OutlinedButton(
-                                    onPressed: _showSubscriptionOptions,
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor:
-                                          Theme.of(context).primaryColor,
-                                      side: BorderSide(
-                                        color: Theme.of(context).primaryColor,
-                                        width: 1,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    child: const Text(
-                                      'Subscribe',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                          const SizedBox(height: 2),
+                          // Price
+                          Text(
+                            '₹${widget.product.price.toStringAsFixed(0)} / ${widget.product.unitText}',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const Spacer(), // Pushes buttons to the bottom
+                          // Buttons Section
+                          if (widget.product.canSubscribe) ...[
+                            SizedBox(
+                              width: double.infinity,
+                              height: 26, // Fixed height for consistency
+                              child: OutlinedButton(
+                                onPressed: _showSubscriptionOptions,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor:
+                                      Theme.of(context).primaryColor,
+                                  side: BorderSide(
+                                    color: Theme.of(context).primaryColor,
+                                    width: 1,
                                   ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  padding: EdgeInsets.zero,
                                 ),
-                              if (widget.product.canSubscribe)
-                                const SizedBox(height: 4),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 28,
-                                child: ElevatedButton(
-                                  onPressed: _isAdding ? null : _addToCart,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).primaryColor,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    elevation: 0,
+                                child: const Text(
+                                  'Subscribe',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  child:
-                                      _isAdding
-                                          ? const SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                          : const Text(
-                                            'Buy Once',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
                                 ),
                               ),
-                            ],
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+                          SizedBox(
+                            width: double.infinity,
+                            height: 26,
+                            child: ElevatedButton(
+                              onPressed: _isAdding ? null : _addToCart,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).primaryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                              ),
+                              child:
+                                  _isAdding
+                                      ? const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : const Text(
+                                        'Buy Once',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                            ),
                           ),
                         ],
                       ),

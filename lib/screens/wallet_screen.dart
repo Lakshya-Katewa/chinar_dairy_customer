@@ -164,53 +164,76 @@ class _WalletScreenState extends State<WalletScreen> {
       amount: amount,
       orderId: PaymentService.generateOrderId(),
       customerName: authProvider.customer!.name,
-      customerEmail: authProvider.customer!.email ?? 'customer@chinardairy.com',
+      customerEmail: authProvider.customer!.email ?? 'customer@chinaragro.com',
       customerPhone: authProvider.customer!.phone,
-      description: 'Add money to wallet',
+      description: 'Wallet top-up - ChinarAgro',
       onSuccess: (response) async {
+        // 1. Validate that we actually have a Payment ID from Razorpay
+        if (response.paymentId == null || response.paymentId!.isEmpty) {
+          _showError('Invalid Payment ID received. Please contact support.');
+          return;
+        }
+
+        // 2. Show a non-dismissible loading dialog while updating Firestore
+        // This prevents the user from navigating away while the wallet is being updated
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
+        );
+
         final walletProvider = Provider.of<WalletProvider>(
           context,
           listen: false,
         );
+
         try {
+          // 3. Call the provider to update the wallet
           await walletProvider.addToWallet(
             customerId: authProvider.customer!.id,
             amount: amount,
-            description: 'Wallet top-up',
-            transactionId: response.paymentId ?? 'unknown',
+            description: 'Wallet top-up (Ref: ${response.paymentId})',
+            transactionId: response.paymentId!,
           );
-          _amountController.clear();
 
           if (mounted) {
+            Navigator.pop(context); // Remove loading dialog
+            _amountController.clear();
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Money added successfully!'),
+              SnackBar(
+                content: Text('₹$amount added to wallet successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
           }
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to update wallet: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            Navigator.pop(context); // Remove loading dialog
+            _showError('Wallet update failed: $e');
           }
         }
       },
       onError: (response) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment failed: ${response.message}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        // If Razorpay returns an error, the code below ensures
+        // NO provider methods are called, so no money is added.
+        _showError('Payment Failed: ${response.message}');
       },
       onExternalWallet: (response) {
         debugPrint("External Wallet Selected: ${response.walletName}");
       },
+    );
+  }
+
+  // Helper to keep code clean
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 

@@ -6,7 +6,8 @@ import '../models/customer.dart';
 import '../models/address.dart';
 
 class OrderProvider with ChangeNotifier {
-  final firestore.FirebaseFirestore _firestore = firestore.FirebaseFirestore.instance;
+  final firestore.FirebaseFirestore _firestore =
+      firestore.FirebaseFirestore.instance;
 
   List<Order> _orders = [];
   bool _isLoading = false;
@@ -29,35 +30,40 @@ class OrderProvider with ChangeNotifier {
           .collection('orders')
           .where('customerId', isEqualTo: customerId)
           .snapshots()
-          .listen((snapshot) {
-        debugPrint('🔄 Orders snapshot received: ${snapshot.docs.length} orders');
+          .listen(
+            (snapshot) {
+              debugPrint(
+                '🔄 Orders snapshot received: ${snapshot.docs.length} orders',
+              );
 
-        _orders.clear();
-        List<Order> tempOrders = [];
+              _orders.clear();
+              List<Order> tempOrders = [];
 
-        for (var doc in snapshot.docs) {
-          try {
-            final order = Order.fromFirestore(doc);
-            tempOrders.add(order);
-            debugPrint('✅ Successfully parsed order: ${order.id}');
-          } catch (e) {
-            debugPrint('❌ Error parsing order ${doc.id}: $e');
-          }
-        }
+              for (var doc in snapshot.docs) {
+                try {
+                  final order = Order.fromFirestore(doc);
+                  tempOrders.add(order);
+                  debugPrint('✅ Successfully parsed order: ${order.id}');
+                } catch (e) {
+                  debugPrint('❌ Error parsing order ${doc.id}: $e');
+                }
+              }
 
-        // Sort orders by creation date (newest first)
-        tempOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        _orders = tempOrders;
+              // Sort orders by creation date (newest first)
+              tempOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+              _orders = tempOrders;
 
-        debugPrint('📋 Final orders list: ${_orders.length} orders');
-        _isLoading = false;
-        notifyListeners();
-      }, onError: (error) {
-        debugPrint('❌ Error listening to orders: $error');
-        _error = error.toString();
-        _isLoading = false;
-        notifyListeners();
-      });
+              debugPrint('📋 Final orders list: ${_orders.length} orders');
+              _isLoading = false;
+              notifyListeners();
+            },
+            onError: (error) {
+              debugPrint('❌ Error listening to orders: $error');
+              _error = error.toString();
+              _isLoading = false;
+              notifyListeners();
+            },
+          );
     } catch (e) {
       debugPrint('❌ Error loading orders: $e');
       _error = e.toString();
@@ -78,22 +84,28 @@ class OrderProvider with ChangeNotifier {
   }) async {
     try {
       // Get customer details
-      final customerDoc = await _firestore.collection('customers').doc(customerId).get();
-      
+      final customerDoc =
+          await _firestore.collection('customers').doc(customerId).get();
+
       if (!customerDoc.exists) {
         throw Exception('Customer not found');
       }
-      
+
       final customerData = customerDoc.data() as Map<String, dynamic>;
 
-      final orderItems = items.map((cartItem) => OrderItem(
-        productId: cartItem.productId,
-        productName: cartItem.productName,
-        quantity: cartItem.quantity.toInt(),
-        price: cartItem.price,
-        unit: cartItem.unit,
-        imageUrl: cartItem.imageUrl,
-      )).toList();
+      final orderItems =
+          items
+              .map(
+                (cartItem) => OrderItem(
+                  productId: cartItem.productId,
+                  productName: cartItem.productName,
+                  quantity: cartItem.quantity.toDouble(),
+                  price: cartItem.price,
+                  unit: cartItem.unit,
+                  imageUrl: cartItem.imageUrl,
+                ),
+              )
+              .toList();
 
       final order = Order(
         id: '',
@@ -105,7 +117,9 @@ class OrderProvider with ChangeNotifier {
         status: OrderStatus.pending,
         deliveryAddress: deliveryAddress,
         orderDate: DateTime.now(),
-        deliveryDate: DateTime.now().add(const Duration(days: 1)), // Default next day
+        deliveryDate: DateTime.now().add(
+          const Duration(days: 1),
+        ), // Default next day
         paymentMethod: paymentMethod,
         paymentId: paymentId,
         deliverySlot: deliverySlot,
@@ -130,7 +144,8 @@ class OrderProvider with ChangeNotifier {
           'customerId': customerId,
           'amount': totalAmount,
           'type': 'debit',
-          'description': 'Order payment - Order #${orderDoc.id.substring(0, 8)}',
+          'description':
+              'Order payment - Order #${orderDoc.id.substring(0, 8)}',
           'orderId': orderDoc.id,
           'paymentMethod': paymentMethod,
           'paymentId': paymentId,
@@ -145,27 +160,35 @@ class OrderProvider with ChangeNotifier {
   }
 
   // Auto-save delivery address like Swiggy
-  Future<void> _autoSaveDeliveryAddress(String customerId, DetailedAddress address) async {
+  Future<void> _autoSaveDeliveryAddress(
+    String customerId,
+    DetailedAddress address,
+  ) async {
     try {
       // Check if this address already exists
-      final existingAddresses = await _firestore
-          .collection('saved_addresses')
-          .where('customerId', isEqualTo: customerId)
-          .where('address.fullAddress', isEqualTo: address.fullAddress)
-          .get();
+      final existingAddresses =
+          await _firestore
+              .collection('saved_addresses')
+              .where('customerId', isEqualTo: customerId)
+              .where('address.fullAddress', isEqualTo: address.fullAddress)
+              .get();
 
       if (existingAddresses.docs.isEmpty) {
         // Address doesn't exist, save it
-        final addressCount = await _firestore
-            .collection('saved_addresses')
-            .where('customerId', isEqualTo: customerId)
-            .get();
+        final addressCount =
+            await _firestore
+                .collection('saved_addresses')
+                .where('customerId', isEqualTo: customerId)
+                .get();
 
         final isFirstAddress = addressCount.docs.isEmpty;
-        
+
         await _firestore.collection('saved_addresses').add({
           'customerId': customerId,
-          'label': isFirstAddress ? 'Home' : 'Address ${addressCount.docs.length + 1}',
+          'label':
+              isFirstAddress
+                  ? 'Home'
+                  : 'Address ${addressCount.docs.length + 1}',
           'address': address.toMap(),
           'isDefault': isFirstAddress, // First address becomes default
           'createdAt': firestore.Timestamp.fromDate(DateTime.now()),
@@ -186,20 +209,32 @@ class OrderProvider with ChangeNotifier {
     required DateTime deliveryDate,
     String? notes,
   }) async {
-    final totalAmount = cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+    final totalAmount = cartItems.fold(
+      0.0,
+      (sum, item) => sum + item.totalPrice,
+    );
 
+    // 1. Double-check balance before proceeding
     if (customer.walletBalance < totalAmount) {
-      throw Exception('Insufficient wallet balance. Add ₹${(totalAmount - customer.walletBalance).toStringAsFixed(2)} to continue.');
+      throw Exception(
+        'Insufficient wallet balance. Add ₹${(totalAmount - customer.walletBalance).toStringAsFixed(2)} to continue.',
+      );
     }
 
-    final orderItems = cartItems.map((cartItem) => OrderItem(
-      productId: cartItem.productId,
-      productName: cartItem.productName,
-      quantity: cartItem.quantity.toInt(),
-      price: cartItem.price,
-      unit: cartItem.unit,
-      imageUrl: cartItem.imageUrl,
-    )).toList();
+    // 2. SUPPORT 0.5 QUANTITY: Ensure quantity is mapped as double
+    final orderItems =
+        cartItems
+            .map(
+              (cartItem) => OrderItem(
+                productId: cartItem.productId,
+                productName: cartItem.productName,
+                quantity: cartItem.quantity, // Now a double (e.g., 0.5, 1.5)
+                price: cartItem.price,
+                unit: cartItem.unit,
+                imageUrl: cartItem.imageUrl,
+              ),
+            )
+            .toList();
 
     final order = Order(
       id: '',
@@ -219,19 +254,29 @@ class OrderProvider with ChangeNotifier {
     );
 
     try {
-      // Create order
+      // 3. Create the order document
       final orderDoc = await _firestore.collection('orders').add(order.toMap());
 
-      // Auto-save delivery address
-      await _autoSaveDeliveryAddress(customer.id, deliveryAddress);
-
-      // Update wallet balance
+      // 4. AUTO-SAVE & OVERWRITE PLACEHOLDER ADDRESS
+      // Since we skipped GPS at registration, we now save the real
+      // deliveryAddress to the customer profile for future use.
       await _firestore.collection('customers').doc(customer.id).update({
-        'walletBalance': customer.walletBalance - totalAmount,
+        'address': deliveryAddress.toMap(),
         'updatedAt': firestore.Timestamp.fromDate(DateTime.now()),
       });
 
-      // Create transaction record
+      // Also save to the separate saved_addresses collection (as you had previously)
+      await _autoSaveDeliveryAddress(customer.id, deliveryAddress);
+
+      // 5. Update wallet balance
+      await _firestore.collection('customers').doc(customer.id).update({
+        'walletBalance': firestore.FieldValue.increment(
+          -totalAmount,
+        ), // Use FieldValue for safety
+        'updatedAt': firestore.Timestamp.fromDate(DateTime.now()),
+      });
+
+      // 6. Create transaction record
       await _firestore.collection('transactions').add({
         'customerId': customer.id,
         'amount': totalAmount,
@@ -244,30 +289,32 @@ class OrderProvider with ChangeNotifier {
 
       return orderDoc.id;
     } catch (e) {
+      debugPrint('Error placing order: $e');
       throw Exception('Failed to place order: $e');
     }
   }
 
   Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
-  try {
-    // --- START: MODIFIED CODE ---
-    final updateData = <String, dynamic>{
-      'status': status.toString().split('.').last,
-      'updatedAt': firestore.Timestamp.fromDate(DateTime.now()),
-    };
+    try {
+      // --- START: MODIFIED CODE ---
+      final updateData = <String, dynamic>{
+        'status': status.toString().split('.').last,
+        'updatedAt': firestore.Timestamp.fromDate(DateTime.now()),
+      };
 
-    // If the order is being marked as delivered, also set the deliveredAt timestamp
-    if (status == OrderStatus.delivered) {
-      updateData['deliveredAt'] = firestore.Timestamp.fromDate(DateTime.now());
+      // If the order is being marked as delivered, also set the deliveredAt timestamp
+      if (status == OrderStatus.delivered) {
+        updateData['deliveredAt'] = firestore.Timestamp.fromDate(
+          DateTime.now(),
+        );
+      }
+
+      await _firestore.collection('orders').doc(orderId).update(updateData);
+      // --- END: MODIFIED CODE ---
+    } catch (e) {
+      throw Exception('Failed to update order status: $e');
     }
-    
-    await _firestore.collection('orders').doc(orderId).update(updateData);
-    // --- END: MODIFIED CODE ---
-
-  } catch (e) {
-    throw Exception('Failed to update order status: $e');
   }
-}
 
   Future<void> cancelOrder(String orderId) async {
     try {
@@ -280,7 +327,8 @@ class OrderProvider with ChangeNotifier {
       final order = Order.fromFirestore(orderDoc);
 
       // Only allow cancellation if order is pending or confirmed
-      if (order.status != OrderStatus.pending && order.status != OrderStatus.confirmed) {
+      if (order.status != OrderStatus.pending &&
+          order.status != OrderStatus.confirmed) {
         throw Exception('Order cannot be cancelled at this stage');
       }
 
@@ -291,7 +339,8 @@ class OrderProvider with ChangeNotifier {
       });
 
       // Refund to wallet if payment was made
-      if (order.paymentMethod == 'wallet' || order.paymentMethod == 'razorpay') {
+      if (order.paymentMethod == 'wallet' ||
+          order.paymentMethod == 'razorpay') {
         await _firestore.collection('customers').doc(order.customerId).update({
           'walletBalance': firestore.FieldValue.increment(order.totalAmount),
           'updatedAt': firestore.Timestamp.fromDate(DateTime.now()),
@@ -302,7 +351,8 @@ class OrderProvider with ChangeNotifier {
           'customerId': order.customerId,
           'amount': order.totalAmount,
           'type': 'credit',
-          'description': 'Order cancellation refund - Order #${orderId.substring(0, 8)}',
+          'description':
+              'Order cancellation refund - Order #${orderId.substring(0, 8)}',
           'orderId': orderId,
           'paymentMethod': 'refund',
           'createdAt': firestore.Timestamp.fromDate(DateTime.now()),

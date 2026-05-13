@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../main.dart';
 
 class Transaction {
   final String id;
@@ -125,26 +126,43 @@ class WalletProvider with ChangeNotifier {
     required String transactionId,
   }) async {
     try {
+      // 1. Check if this transaction has already been processed (Safety against duplicates)
+      final existingTx =
+          await _firestore
+              .collection('transactions')
+              .where('transactionId', isEqualTo: transactionId)
+              .get();
+
+      if (existingTx.docs.isNotEmpty) {
+        throw Exception('This transaction has already been processed.');
+      }
+
       final batch = _firestore.batch();
       final customerRef = _firestore.collection('customers').doc(customerId);
 
+      // 2. Update wallet balance
       batch.update(customerRef, {
         'walletBalance': FieldValue.increment(amount),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
+      // 3. Log the transaction with the unique Razorpay Payment ID
       final transactionRef = _firestore.collection('transactions').doc();
       batch.set(transactionRef, {
         'customerId': customerId,
         'amount': amount,
         'type': 'credit',
         'description': description,
-        'transactionId': transactionId,
+        'transactionId': transactionId, // Razorpay Payment ID
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       await batch.commit();
+
+      // Clear any low balance notifications
+      await flutterLocalNotificationsPlugin.cancelAll();
     } catch (e) {
+      debugPrint('Wallet Error: $e');
       throw Exception('Failed to add to wallet: $e');
     }
   }

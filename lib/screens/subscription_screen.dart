@@ -396,8 +396,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                           children: [
                             IconButton(
                               onPressed:
-                                  quantity > 1
-                                      ? () => setState(() => quantity--)
+                                  quantity > 0.5
+                                      ? () => setState(() => quantity -= 0.5)
                                       : null,
                               icon: const Icon(Icons.remove),
                               style: IconButton.styleFrom(
@@ -406,7 +406,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                             Expanded(
                               child: Text(
-                                '${quantity.toInt()} ${product!.unitText}',
+                                quantity % 1 == 0
+                                    ? '${quantity.toInt()} ${product!.unitText}'
+                                    : '${quantity.toStringAsFixed(1)} ${product!.unitText}',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 18,
@@ -417,7 +419,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () => setState(() => quantity++),
+                              onPressed: () => setState(() => quantity += 0.5),
                               icon: const Icon(Icons.add),
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.white,

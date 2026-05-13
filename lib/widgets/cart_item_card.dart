@@ -102,7 +102,10 @@ class CartItemCard extends StatelessWidget {
                             context,
                             listen: false,
                           );
-                          cp.updateQuantity(cartItem.id, cartItem.quantity - 1);
+                          cp.updateQuantity(
+                            cartItem.id,
+                            cartItem.quantity - 0.5,
+                          );
                         },
                         borderRadius: const BorderRadius.horizontal(
                           left: Radius.circular(8),
@@ -118,7 +121,9 @@ class CartItemCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          '${cartItem.quantity.toInt()}',
+                          cartItem.quantity % 1 == 0
+                              ? '${cartItem.quantity.toInt()}'
+                              : cartItem.quantity.toStringAsFixed(1),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -131,7 +136,10 @@ class CartItemCard extends StatelessWidget {
                             context,
                             listen: false,
                           );
-                          cp.updateQuantity(cartItem.id, cartItem.quantity + 1);
+                          cp.updateQuantity(
+                            cartItem.id,
+                            cartItem.quantity + 0.5,
+                          );
                         },
                         borderRadius: const BorderRadius.horizontal(
                           right: Radius.circular(8),

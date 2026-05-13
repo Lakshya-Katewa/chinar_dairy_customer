@@ -124,20 +124,24 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
   }
 
   Future<void> _completeRegistration() async {
-    if (!_formKey.currentState!.validate() || _selectedArea == null) {
+    // 1. Basic validation and mandatory Area selection check
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedArea == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all required fields and select an area'),
-          backgroundColor: Colors.red,
+          content: Text('Please select a delivery area to continue'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
+    // 2. Strict Referral Code check (if they typed something, it must be valid)
     if (_referralCodeController.text.isNotEmpty && _isReferralValid != true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid referral code or leave it empty'),
+          content: Text('The referral code entered is invalid'),
           backgroundColor: Colors.red,
         ),
       );
@@ -146,37 +150,46 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // FIX 8: Create a placeholder address since we no longer ask for GPS during registration
+    // 3. Create Placeholder Address
+    // As per your requirement, we skip GPS here.
+    // The 'street' and 'city' are defaulted to empty strings to avoid null errors.
     final dummyAddress = DetailedAddress(
       houseNumber: '',
-      street: '',
-      city: '',
+      street: '', // Will be updated on first order
+      city: '', // Will be updated on first order
       pinCode: '',
       landmark: '',
       latitude: 0.0,
       longitude: 0.0,
-      fullAddress: 'Address will be added during first order',
+      fullAddress: 'Address will be captured via GPS on your first order',
     );
 
+    // 4. Trigger Loading State (If you use authProvider.isLoading in your UI)
     try {
       await authProvider.createCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         address: dummyAddress,
-        areaCode: _selectedArea!.areaCode,
+        areaCode:
+            _selectedArea!
+                .areaCode, // Uses the preset area code selected from the list
         referralCode:
             _referralCodeController.text.trim().isNotEmpty
-                ? _referralCodeController.text.trim()
+                ? _referralCodeController.text.trim().toUpperCase()
                 : null,
       );
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/main');
+        // 5. Success Navigation
+        Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Registration failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

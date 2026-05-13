@@ -16,7 +16,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+      final subscriptionProvider = Provider.of<SubscriptionProvider>(
+        context,
+        listen: false,
+      );
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       if (authProvider.customer != null) {
@@ -63,7 +66,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         return 'Alternate Day';
     }
   }
-  
+
   Widget _buildDaysInfo(String label, int value, Color color) {
     return Expanded(
       child: Column(
@@ -79,10 +82,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -102,15 +102,18 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         int daysUsed = 0;
 
         if (subscription.endDate != null) {
-          totalDays = subscription.endDate!.difference(subscription.startDate).inDays + 1;
+          totalDays =
+              subscription.endDate!.difference(subscription.startDate).inDays +
+              1;
 
-          if (today.isAfter(subscription.startDate) || today.isAtSameMomentAs(subscription.startDate)) {
-              daysUsed = today.difference(subscription.startDate).inDays + 1;
+          if (today.isAfter(subscription.startDate) ||
+              today.isAtSameMomentAs(subscription.startDate)) {
+            daysUsed = today.difference(subscription.startDate).inDays + 1;
           }
-          
+
           daysUsed = daysUsed.clamp(0, totalDays);
         }
-        
+
         final int daysRemaining = totalDays - daysUsed;
 
         return Container(
@@ -144,11 +147,18 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(subscription.status).withOpacity(0.1),
+                        color: _getStatusColor(
+                          subscription.status,
+                        ).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _getStatusColor(subscription.status)),
+                        border: Border.all(
+                          color: _getStatusColor(subscription.status),
+                        ),
                       ),
                       child: Text(
                         'Status: ${_getStatusText(subscription.status)}',
@@ -169,13 +179,17 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildDaysInfo('Days Used', daysUsed, Colors.orange.shade700),
-                  _buildDaysInfo('Days Remaining', daysRemaining, Colors.green.shade700),
+                  _buildDaysInfo(
+                    'Days Remaining',
+                    daysRemaining,
+                    Colors.green.shade700,
+                  ),
                   _buildDaysInfo('Total Days', totalDays, Colors.blue.shade700),
                 ],
               ),
@@ -252,7 +266,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   Future<void> _pauseSubscription(String subscriptionId) async {
     Navigator.pop(context);
     try {
-      final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+      final subscriptionProvider = Provider.of<SubscriptionProvider>(
+        context,
+        listen: false,
+      );
       await subscriptionProvider.pauseSubscription(subscriptionId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -277,7 +294,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   Future<void> _resumeSubscription(String subscriptionId) async {
     Navigator.pop(context);
     try {
-      final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
+      final subscriptionProvider = Provider.of<SubscriptionProvider>(
+        context,
+        listen: false,
+      );
       await subscriptionProvider.resumeSubscription(subscriptionId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -304,39 +324,48 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cancel Subscription'),
-        content: const Text(
-          'Are you sure you want to cancel? Any remaining balance will be refunded to your wallet.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('Yes, Cancel'),
+            title: const Text('Cancel Subscription'),
+            content: const Text(
+              'Are you sure you want to cancel? Any remaining balance will be refunded to your wallet.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('No'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Yes, Cancel'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
       try {
-        final subscriptionProvider = Provider.of<SubscriptionProvider>(context, listen: false);
-        final double refundedAmount = await subscriptionProvider.cancelSubscription(subscriptionId);
-        
+        final subscriptionProvider = Provider.of<SubscriptionProvider>(
+          context,
+          listen: false,
+        );
+        final double refundedAmount = await subscriptionProvider
+            .cancelSubscription(subscriptionId);
+
         if (mounted) {
           if (refundedAmount > 0) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Subscription cancelled. ₹${refundedAmount.toStringAsFixed(2)} refunded.'),
+                content: Text(
+                  'Subscription cancelled. ₹${refundedAmount.toStringAsFixed(2)} refunded.',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -435,9 +464,15 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                DefaultTabController.of(context)?.animateTo(0);
+                // FIX: Navigate back to the MainScreen (which defaults to the Home/Browse tab)
+                // This clears any open dialogs or sub-menus and resets the view.
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/main',
+                  (route) => false,
+                );
               },
-              icon: const Icon(Icons.shopping_cart_outlined),
+              icon: const Icon(Icons.search), // Updated icon for browsing
               label: const Text('Browse Products'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,
@@ -471,19 +506,27 @@ class SubscriptionCard extends StatelessWidget {
 
   Color _getStatusColor(SubscriptionStatus status) {
     switch (status) {
-      case SubscriptionStatus.active: return Colors.green;
-      case SubscriptionStatus.paused: return Colors.orange;
-      case SubscriptionStatus.cancelled: return Colors.red;
-      case SubscriptionStatus.expired: return Colors.grey;
+      case SubscriptionStatus.active:
+        return Colors.green;
+      case SubscriptionStatus.paused:
+        return Colors.orange;
+      case SubscriptionStatus.cancelled:
+        return Colors.red;
+      case SubscriptionStatus.expired:
+        return Colors.grey;
     }
   }
 
   String _getStatusText(SubscriptionStatus status) {
     switch (status) {
-      case SubscriptionStatus.active: return 'Active';
-      case SubscriptionStatus.paused: return 'Paused';
-      case SubscriptionStatus.cancelled: return 'Cancelled';
-      case SubscriptionStatus.expired: return 'Expired';
+      case SubscriptionStatus.active:
+        return 'Active';
+      case SubscriptionStatus.paused:
+        return 'Paused';
+      case SubscriptionStatus.cancelled:
+        return 'Cancelled';
+      case SubscriptionStatus.expired:
+        return 'Expired';
     }
   }
 
@@ -492,10 +535,16 @@ class SubscriptionCard extends StatelessWidget {
     int totalDays = 1;
     int daysUsed = 0;
     if (subscription.endDate != null) {
-      totalDays = subscription.endDate!.difference(subscription.startDate).inDays + 1;
-      final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-      if (today.isAfter(subscription.startDate) || today.isAtSameMomentAs(subscription.startDate)) {
-          daysUsed = today.difference(subscription.startDate).inDays + 1;
+      totalDays =
+          subscription.endDate!.difference(subscription.startDate).inDays + 1;
+      final today = DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+      );
+      if (today.isAfter(subscription.startDate) ||
+          today.isAtSameMomentAs(subscription.startDate)) {
+        daysUsed = today.difference(subscription.startDate).inDays + 1;
       }
       daysUsed = daysUsed.clamp(0, totalDays);
     }
@@ -524,20 +573,27 @@ class SubscriptionCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: subscription.imageUrl != null
-                        ? Image.network(
-                            subscription.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.local_drink, size: 30),
-                          )
-                        : Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey.shade100,
-                            child: const Icon(Icons.local_drink, size: 30, color: Colors.grey),
-                          ),
+                    child:
+                        subscription.imageUrl != null
+                            ? Image.network(
+                              subscription.imageUrl!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder:
+                                  (_, __, ___) =>
+                                      const Icon(Icons.local_drink, size: 30),
+                            )
+                            : Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey.shade100,
+                              child: const Icon(
+                                Icons.local_drink,
+                                size: 30,
+                                color: Colors.grey,
+                              ),
+                            ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -563,7 +619,10 @@ class SubscriptionCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -580,7 +639,8 @@ class SubscriptionCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              if (subscription.status == SubscriptionStatus.active || subscription.status == SubscriptionStatus.paused) ...[
+              if (subscription.status == SubscriptionStatus.active ||
+                  subscription.status == SubscriptionStatus.paused) ...[
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -589,12 +649,18 @@ class SubscriptionCard extends StatelessWidget {
                       children: [
                         Text(
                           '$daysUsed of $totalDays days used',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                         if (subscription.endDate != null)
                           Text(
                             'Ends: ${subscription.endDate!.day}/${subscription.endDate!.month}/${subscription.endDate!.year}',
-                            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                       ],
                     ),
