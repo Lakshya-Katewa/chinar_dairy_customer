@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Chinar Dairy',
+                    'ChinarAgro',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -53,15 +53,12 @@ class AboutScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   const Text(
                     'Fresh • Pure • Trusted',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
             ),
-            
+
             // Content Section
             Padding(
               padding: const EdgeInsets.all(20),
@@ -71,39 +68,43 @@ class AboutScreen extends StatelessWidget {
                   _buildInfoCard(
                     icon: Icons.info_outline,
                     title: 'Our Story',
-                    content: 'Chinar Dairy has been serving fresh, pure dairy products to families for over a decade. We are committed to providing the highest quality milk and dairy products sourced directly from local farms.',
+                    content:
+                        'ChinarAgro has been serving fresh, pure dairy products to families for over a decade. We are committed to providing the highest quality milk and dairy products sourced directly from local farms.',
                     color: Colors.blue,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildInfoCard(
                     icon: Icons.eco,
                     title: 'Our Mission',
-                    content: 'To deliver farm-fresh, nutritious dairy products to your doorstep while supporting local farmers and maintaining the highest standards of quality and hygiene.',
+                    content:
+                        'To deliver farm-fresh, nutritious dairy products to your doorstep while supporting local farmers and maintaining the highest standards of quality and hygiene.',
                     color: Colors.green,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildInfoCard(
                     icon: Icons.verified,
                     title: 'Quality Assurance',
-                    content: 'All our products undergo rigorous quality checks and are processed in state-of-the-art facilities. We ensure that every drop of milk meets the highest standards of purity and freshness.',
+                    content:
+                        'All our products undergo rigorous quality checks and are processed in state-of-the-art facilities. We ensure that every drop of milk meets the highest standards of purity and freshness.',
                     color: Colors.orange,
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   _buildInfoCard(
                     icon: Icons.local_shipping,
                     title: 'Delivery Promise',
-                    content: 'We guarantee fresh delivery every morning at your doorstep. Our efficient cold chain ensures that products maintain their freshness from farm to your table.',
+                    content:
+                        'We guarantee fresh delivery every morning at your doorstep. Our efficient cold chain ensures that products maintain their freshness from farm to your table.',
                     color: Colors.purple,
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // App Version
                   Center(
                     child: Container(
@@ -115,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'Chinar Dairy App',
+                            'ChinarAgro App',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -151,9 +152,7 @@ class AboutScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -167,11 +166,7 @@ class AboutScreen extends StatelessWidget {
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 24,
-                  ),
+                  child: Icon(icon, color: color, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Text(

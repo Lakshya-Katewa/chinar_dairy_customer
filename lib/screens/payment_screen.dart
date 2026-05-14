@@ -178,18 +178,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
       description: 'Wallet top-up via $paymentMethod',
       transactionId: paymentId,
     );
+    await authProvider.refreshCustomerData();
   }
 
   String _getPaymentDescription() {
     switch (widget.paymentType) {
       case 'order':
-        return 'Order payment - Chinar Dairy';
+        return 'Order payment - ChinarAgro';
       case 'subscription':
-        return 'Subscription payment - Chinar Dairy';
+        return 'Subscription payment - ChinarAgro';
       case 'wallet_topup':
-        return 'Wallet top-up - Chinar Dairy';
+        return 'Wallet top-up - ChinarAgro';
       default:
-        return 'Payment - Chinar Dairy';
+        return 'Payment - ChinarAgro';
     }
   }
 

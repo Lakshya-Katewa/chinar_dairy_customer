@@ -90,9 +90,9 @@ class HelpSupportScreen extends StatelessWidget {
                     icon: Icons.phone,
                     title: 'Call Us',
                     subtitle: 'Speak directly with our support team',
-                    value: '+91 98765 43210',
+                    value: '+91 9622350587',
                     color: Colors.green,
-                    onTap: () => _launchPhone('+919876543210'),
+                    onTap: () => _launchPhone('+919622350587'),
                   ),
 
                   const SizedBox(height: 16),
@@ -112,9 +112,9 @@ class HelpSupportScreen extends StatelessWidget {
                     icon: Icons.chat,
                     title: 'WhatsApp',
                     subtitle: 'Chat with us on WhatsApp',
-                    value: '+91 98765 43210',
+                    value: '+91 9622350587',
                     color: Colors.green.shade600,
-                    onTap: () => _launchWhatsApp('919876543210'),
+                    onTap: () => _launchWhatsApp('919622350587'),
                   ),
 
                   const SizedBox(height: 24),
@@ -228,7 +228,7 @@ class HelpSupportScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Chinar Dairy Farm\nSrinagar, Kashmir\nJammu & Kashmir, India\nPIN: 190001',
+                            'ChinarAgro Farm\nSrinagar, Kashmir\nJammu & Kashmir, India\nPIN: 190001',
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey.shade700,

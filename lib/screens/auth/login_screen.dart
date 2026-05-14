@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     try {
       await authProvider.sendOTP(_phoneController.text.trim());
       if (mounted) {
@@ -55,9 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height - 
-                         MediaQuery.of(context).padding.top - 
-                         MediaQuery.of(context).padding.bottom - 48,
+              minHeight:
+                  MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom -
+                  48,
             ),
             child: IntrinsicHeight(
               child: Form(
@@ -67,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Spacer(),
-                    
+
                     // Logo
                     Container(
                       width: 100,
@@ -82,21 +84,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.green.shade700,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Title
                     Text(
-                      'Welcome to Chinar Dairy',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      'Welcome to ChinarAgro',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade700,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Subtitle
                     Text(
                       'Enter your phone number to continue',
@@ -105,9 +109,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: 48),
-                    
+
                     // Phone Input
                     TextFormField(
                       controller: _phoneController,
@@ -132,9 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Send OTP Button
                     Consumer<AuthProvider>(
                       builder: (context, authProvider, child) {
@@ -149,28 +153,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             minimumSize: const Size(double.infinity, 56),
                           ),
-                          child: authProvider.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                          child:
+                              authProvider.isLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Text(
+                                    'Send OTP',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Send OTP',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         );
                       },
                     ),
-                    
+
                     const Spacer(),
-                    
+
                     // Terms and Privacy
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -182,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
                   ],
                 ),

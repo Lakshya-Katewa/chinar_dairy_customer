@@ -37,7 +37,7 @@ class PaymentService {
     var options = {
       'key': 'rzp_test_SeVEtAoJ3Trffh', // Correct confirmed key
       'amount': amountInPaise,
-      'name': 'Chinar Dairy',
+      'name': 'ChinarAgro',
       'description': description,
       'retry': {'enabled': true, 'max_count': 1},
       'send_sms_hash': true,

@@ -14,11 +14,14 @@ class HomeTabScreen extends StatefulWidget {
 class _HomeTabScreenState extends State<HomeTabScreen> {
   final _searchController = TextEditingController();
 
-   @override
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
       if (productProvider.products.isEmpty) {
         productProvider.loadProducts();
       }
@@ -59,28 +62,40 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search for fresh dairy products...',
                   prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            Provider.of<ProductProvider>(context, listen: false).searchProducts('');
-                          },
-                        )
-                      : null,
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              Provider.of<ProductProvider>(
+                                context,
+                                listen: false,
+                              ).searchProducts('');
+                            },
+                          )
+                          : null,
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 onChanged: (value) {
-                  Provider.of<ProductProvider>(context, listen: false).searchProducts(value);
+                  Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  ).searchProducts(value);
                 },
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: InkWell(
                 onTap: () => Navigator.pushNamed(context, '/referral'),
                 borderRadius: BorderRadius.circular(16),
@@ -96,19 +111,40 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.card_giftcard, color: Colors.white, size: 40),
+                      const Icon(
+                        Icons.card_giftcard,
+                        color: Colors.white,
+                        size: 40,
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
-                            Text('Refer & Earn ₹50!', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(
+                              'Refer & Earn ₹50!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             SizedBox(height: 4),
-                            Text('Invite friends and get rewards.', style: TextStyle(color: Colors.white, fontSize: 12)),
+                            Text(
+                              'Invite friends and get rewards.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ),
@@ -117,7 +153,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -127,7 +166,14 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Why Choose Chinar Dairy? 🐮', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+                    Text(
+                      'Why Choose ChinarAgro? 🐮',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -136,7 +182,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                         _buildChoiceChip('Purity Guaranteed', Icons.verified),
                         _buildChoiceChip('On-time Delivery', Icons.timer),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -146,14 +192,21 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text('Our Products', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              child: Text(
+                'Our Products',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           Consumer<ProductProvider>(
             builder: (context, productProvider, child) {
               if (productProvider.isLoading) {
-                return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
+                return const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               if (productProvider.products.isEmpty) {
                 return SliverFillRemaining(
@@ -161,9 +214,19 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(height: 16),
-                        Text('No products found', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+                        Text(
+                          'No products found',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -178,13 +241,10 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final product = productProvider.products[index];
-                      return ProductCard(product: product);
-                    },
-                    childCount: productProvider.products.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = productProvider.products[index];
+                    return ProductCard(product: product);
+                  }, childCount: productProvider.products.length),
                 ),
               );
             },
@@ -204,7 +264,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           child: Icon(icon, color: Colors.blue.shade700, size: 28),
         ),
         const SizedBox(height: 8),
-        Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.blue.shade800)),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: Colors.blue.shade800),
+        ),
       ],
     );
   }

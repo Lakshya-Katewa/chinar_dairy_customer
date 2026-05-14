@@ -45,7 +45,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     if (authProvider.customer != null) {
       final referralCode = authProvider.customer!.referralCode;
       final message = '''
-🥛 Join Chinar Dairy and get fresh milk delivered to your doorstep!
+🥛 Join ChinarAgro and get fresh milk delivered to your doorstep!
 
 Use my referral code: $referralCode
 
@@ -393,7 +393,7 @@ Download the app and start enjoying fresh dairy products daily.
                           '• Rewards are non-transferable and non-refundable',
                         ),
                         _buildTermsPoint(
-                          '• Chinar Dairy reserves the right to modify terms',
+                          '• ChinarAgro reserves the right to modify terms',
                         ),
                       ],
                     ),

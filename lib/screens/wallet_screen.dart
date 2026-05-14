@@ -196,7 +196,7 @@ class _WalletScreenState extends State<WalletScreen> {
             description: 'Wallet top-up (Ref: ${response.paymentId})',
             transactionId: response.paymentId!,
           );
-
+          await authProvider.refreshCustomerData();
           if (mounted) {
             Navigator.pop(context); // Remove loading dialog
             _amountController.clear();

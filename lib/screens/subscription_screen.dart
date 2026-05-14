@@ -164,7 +164,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       listen: false,
     );
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
+    await authProvider.refreshCustomerData();
     if (authProvider.customer!.walletBalance < calculatedAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

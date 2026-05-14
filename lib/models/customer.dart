@@ -47,8 +47,14 @@ class Customer {
       areaCode: data['areaCode'] ?? '',
       walletBalance: (data['walletBalance'] ?? 0.0).toDouble(),
       isActive: data['isActive'] ?? true,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt:
+          data['createdAt'] != null
+              ? (data['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
+      updatedAt:
+          data['updatedAt'] != null
+              ? (data['updatedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       referralCode: data['referralCode'] ?? '',
       referredBy: data['referredBy'],
       hasUsedReferral: data['hasUsedReferral'] ?? false,

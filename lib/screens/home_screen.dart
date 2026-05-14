@@ -25,8 +25,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
 
-
-
   @override
   void initState() {
     super.initState();
@@ -40,7 +38,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     _fabAnimationController.forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(
+        context,
+        listen: false,
+      );
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -77,7 +78,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   Widget _buildHomeScreen() {
     return RefreshIndicator(
       onRefresh: () async {
-        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        final productProvider = Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        );
         await productProvider.loadProducts();
       },
       child: CustomScrollView(
@@ -102,31 +106,42 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                 decoration: InputDecoration(
                   hintText: 'Search for fresh dairy products...',
                   prefixIcon: Icon(Icons.search, color: Colors.grey.shade600),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            Provider.of<ProductProvider>(context, listen: false)
-                                .searchProducts('');
-                          },
-                        )
-                      : null,
+                  suffixIcon:
+                      _searchController.text.isNotEmpty
+                          ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              Provider.of<ProductProvider>(
+                                context,
+                                listen: false,
+                              ).searchProducts('');
+                            },
+                          )
+                          : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                 ),
                 onChanged: (value) {
-                  Provider.of<ProductProvider>(context, listen: false)
-                      .searchProducts(value);
+                  Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  ).searchProducts(value);
                 },
               ),
             ),
           ),
-          
+
           // ** NEW: Refer & Earn Poster **
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: InkWell(
                 onTap: () => Navigator.pushNamed(context, '/referral'),
                 child: Container(
@@ -148,7 +163,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.card_giftcard, color: Colors.white, size: 40),
+                      const Icon(
+                        Icons.card_giftcard,
+                        color: Colors.white,
+                        size: 40,
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -165,12 +184,19 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                             SizedBox(height: 4),
                             Text(
                               'Invite friends and get rewards.',
-                              style: TextStyle(color: Colors.white, fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ),
@@ -181,7 +207,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           // ** NEW: Why Choose Us Poster **
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -192,7 +221,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Why Choose Chinar Dairy? 🐮',
+                      'Why Choose Chinaragro? 🐮',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -207,13 +236,13 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                         _buildChoiceChip('Purity Guaranteed', Icons.verified),
                         _buildChoiceChip('On-time Delivery', Icons.timer),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-          
+
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
           // Products Grid Title
@@ -222,7 +251,9 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 'Our Products',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -272,13 +303,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final product = productProvider.products[index];
-                      return ProductCard(product: product);
-                    },
-                    childCount: productProvider.products.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final product = productProvider.products[index];
+                    return ProductCard(product: product);
+                  }, childCount: productProvider.products.length),
                 ),
               );
             },
@@ -326,7 +354,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               children: [
                 Text(
                   'Hello, ${authProvider.customer?.name ?? 'User'}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Row(
@@ -428,10 +459,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           backgroundColor: Colors.white,
           elevation: 0,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag),
               label: 'Orders',
