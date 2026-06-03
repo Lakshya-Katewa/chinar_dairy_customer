@@ -147,40 +147,34 @@ class _ProductCardState extends State<ProductCard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Image Section - Made slightly smaller to give room to buttons
+                  // 1. Image Section (Fluid)
+                  // Removed rigid flex values. Image fills all vertical
+                  // canvas territory left untouched by text and buttons.
                   Expanded(
-                    flex: 12, // Controlled ratio
                     child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Container(
-                          width: double.infinity,
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16),
                           ),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                            child:
-                                widget.product.imageUrl != null
-                                    ? Image.network(
-                                      widget.product.imageUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (_, __, ___) => Icon(
-                                            Icons.local_drink,
-                                            size: 40,
-                                            color: Colors.grey.shade400,
-                                          ),
-                                    )
-                                    : Icon(
-                                      Icons.local_drink,
-                                      size: 40,
-                                      color: Colors.grey.shade400,
-                                    ),
-                          ),
+                          child:
+                              widget.product.imageUrl != null
+                                  ? Image.network(
+                                    widget.product.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (_, __, ___) => Icon(
+                                          Icons.local_drink,
+                                          size: 40,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                  )
+                                  : Icon(
+                                    Icons.local_drink,
+                                    size: 40,
+                                    color: Colors.grey.shade400,
+                                  ),
                         ),
                         if (widget.product.isOneTimeOnly)
                           Positioned(
@@ -209,101 +203,103 @@ class _ProductCardState extends State<ProductCard>
                     ),
                   ),
 
-                  // 2. Details Section
-                  Expanded(
-                    flex: 13, // Increased flex to prevent button overflow
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Product Name
-                          Text(
-                            widget.product.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              height: 1.1,
-                            ),
-                            maxLines: 1, // Restricted to 1 line to save space
-                            overflow: TextOverflow.ellipsis,
+                  // 2. Details & Action Buttons Section
+                  // Uses internal minimum sizing bounds so it never clips or runs out of room.
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Product Name
+                        Text(
+                          widget.product.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            height: 1.1,
                           ),
-                          const SizedBox(height: 2),
-                          // Price
-                          Text(
-                            '₹${widget.product.price.toStringAsFixed(0)} / ${widget.product.unitText}',
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+
+                        // Price
+                        Text(
+                          '₹${widget.product.price.toStringAsFixed(0)} / ${widget.product.unitText}',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
-                          const Spacer(), // Pushes buttons to the bottom
-                          // Buttons Section
-                          if (widget.product.canSubscribe) ...[
-                            SizedBox(
-                              width: double.infinity,
-                              height: 26, // Fixed height for consistency
-                              child: OutlinedButton(
-                                onPressed: _showSubscriptionOptions,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor:
-                                      Theme.of(context).primaryColor,
-                                  side: BorderSide(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 1,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                ),
-                                child: const Text(
-                                  'Subscribe',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                          ],
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Conditional Subscribe Button
+                        if (widget.product.canSubscribe) ...[
                           SizedBox(
                             width: double.infinity,
                             height: 26,
-                            child: ElevatedButton(
-                              onPressed: _isAdding ? null : _addToCart,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor,
-                                foregroundColor: Colors.white,
+                            child: OutlinedButton(
+                              onPressed: _showSubscriptionOptions,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Theme.of(context).primaryColor,
+                                side: BorderSide(
+                                  color: Theme.of(context).primaryColor,
+                                  width: 1,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 padding: EdgeInsets.zero,
-                                elevation: 0,
                               ),
-                              child:
-                                  _isAdding
-                                      ? const SizedBox(
-                                        width: 12,
-                                        height: 12,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                      : const Text(
-                                        'Buy Once',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                              child: const Text(
+                                'Subscribe',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
+                          const SizedBox(height: 4),
                         ],
-                      ),
+
+                        // Buy Once Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 26,
+                          child: ElevatedButton(
+                            onPressed: _isAdding ? null : _addToCart,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              padding: EdgeInsets.zero,
+                              elevation: 0,
+                            ),
+                            child:
+                                _isAdding
+                                    ? const SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : const Text(
+                                      'Buy Once',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

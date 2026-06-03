@@ -8,7 +8,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'firebase_options.dart';
-
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
@@ -33,7 +32,6 @@ import 'screens/profile_screen.dart';
 import 'screens/referal_screen.dart';
 import 'screens/wallet_screen.dart';
 import 'screens/invoices_screen.dart';
-
 import 'utils/theme.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -49,111 +47,39 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  RemoteNotification? notification = message.notification;
-  AndroidNotification? android = message.notification?.android;
-
-  if (notification != null && android != null) {
-    flutterLocalNotificationsPlugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          channel.id,
-          channel.name,
-          channelDescription: channel.description,
-          icon: '@mipmap/ic_launcher',
-          timeoutAfter: 10000,
-          ongoing: false, // Allows the user to swipe it away
-          autoCancel: true, // Removes it automatically when tapped
-        ),
-      ),
-    );
-  }
 }
 
 Future<void> initializeNotificationsAndSaveToken(String customerId) async {
   if (customerId.isEmpty) return;
-
   FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-  NotificationSettings settings = await messaging.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-    provisional: false,
-  );
-
+  NotificationSettings settings = await messaging.requestPermission();
   if (settings.authorizationStatus == AuthorizationStatus.authorized) {
     String? fcmToken = await messaging.getToken();
     if (fcmToken != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('customers')
-            .doc(customerId)
-            .set({'fcmToken': fcmToken}, SetOptions(merge: true));
-      } catch (e) {
-        debugPrint('Error saving FCM token: $e');
-      }
+      await FirebaseFirestore.instance
+          .collection('customers')
+          .doc(customerId)
+          .set({'fcmToken': fcmToken}, SetOptions(merge: true));
     }
   }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
+  // Notification Setup
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin
       >()
       ?.createNotificationChannel(channel);
 
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
+  await FirebaseAppCheck.instance.activate(
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
   );
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    RemoteNotification? notification = message.notification;
-    AndroidNotification? android = message.notification?.android;
-
-    if (notification != null && android != null) {
-      flutterLocalNotificationsPlugin.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            channel.id,
-            channel.name,
-            channelDescription: channel.description,
-            icon: '@mipmap/ic_launcher',
-            ongoing: false, // Allows the user to swipe it away
-            autoCancel: true, // Removes it automatically when tapped
-          ),
-        ),
-      );
-    }
-  });
-
-  if (kDebugMode) {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug,
-      appleProvider: AppleProvider.debug,
-    );
-  } else {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.appAttest,
-    );
-  }
 
   runApp(const ChinarAgroApp());
 }
@@ -175,7 +101,7 @@ class ChinarAgroApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AddressProvider()),
       ],
       child: MaterialApp(
-        title: 'ChinarAgro', // RENAMED
+        title: 'ChinarAgro',
         theme: AppTheme.lightTheme,
         debugShowCheckedModeBanner: false,
         initialRoute: '/',
@@ -194,20 +120,6 @@ class ChinarAgroApp extends StatelessWidget {
           '/referral': (context) => const ReferralScreen(),
           '/wallet': (context) => const WalletScreen(),
           '/invoices': (context) => const InvoicesScreen(),
-        },
-        onGenerateRoute: (settings) {
-          if (settings.name == '/payment') {
-            final args = settings.arguments as Map<String, dynamic>;
-            return MaterialPageRoute(
-              builder:
-                  (context) => PaymentScreen(
-                    totalAmount: args['totalAmount'],
-                    paymentType: args['paymentType'],
-                    orderData: args['orderData'],
-                  ),
-            );
-          }
-          return null;
         },
       ),
     );

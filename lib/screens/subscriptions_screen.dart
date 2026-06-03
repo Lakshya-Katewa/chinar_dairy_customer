@@ -56,7 +56,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
   String _getTypeText(SubscriptionType type) {
     switch (type) {
-      case SubscriptionType.trial: // FIX FOR ISSUE #11: Added Trial support
+      case SubscriptionType.trial:
         return '3-Day Trial';
       case SubscriptionType.monthly:
         return 'Monthly';
@@ -92,6 +92,8 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   void _showSubscriptionActions(Subscription subscription) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled:
+          true, // Added: Allows the sheet to expand beyond half screen
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -116,123 +118,135 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
         final int daysRemaining = totalDays - daysUsed;
 
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+        // Added: SingleChildScrollView wraps the content to prevent bottom overflow
+        return SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      subscription.productName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(
-                          subscription.status,
-                        ).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: _getStatusColor(subscription.status),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        subscription.productName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: Text(
-                        'Status: ${_getStatusText(subscription.status)}',
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(
+                            subscription.status,
+                          ).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _getStatusColor(subscription.status),
+                          ),
+                        ),
+                        child: Text(
+                          'Status: ${_getStatusText(subscription.status)}',
+                          style: TextStyle(
+                            color: _getStatusColor(subscription.status),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Plan: ${_getTypeText(subscription.type)}',
                         style: TextStyle(
-                          color: _getStatusColor(subscription.status),
-                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildDaysInfo(
+                      'Days Used',
+                      daysUsed,
+                      Colors.orange.shade700,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Plan: ${_getTypeText(subscription.type)}',
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    _buildDaysInfo(
+                      'Days Remaining',
+                      daysRemaining,
+                      Colors.green.shade700,
+                    ),
+                    _buildDaysInfo(
+                      'Total Days',
+                      totalDays,
+                      Colors.blue.shade700,
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 24),
 
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildDaysInfo('Days Used', daysUsed, Colors.orange.shade700),
-                  _buildDaysInfo(
-                    'Days Remaining',
-                    daysRemaining,
-                    Colors.green.shade700,
+                if (subscription.status == SubscriptionStatus.active) ...[
+                  _buildActionButton(
+                    icon: Icons.pause,
+                    label: 'Pause Subscription',
+                    color: Colors.orange,
+                    onTap: () => _pauseSubscription(subscription.id),
                   ),
-                  _buildDaysInfo('Total Days', totalDays, Colors.blue.shade700),
+                  const SizedBox(height: 12),
+                  _buildActionButton(
+                    icon: Icons.cancel,
+                    label: 'Cancel Subscription',
+                    color: Colors.red,
+                    onTap: () => _cancelSubscription(subscription.id),
+                  ),
+                ] else if (subscription.status ==
+                    SubscriptionStatus.paused) ...[
+                  _buildActionButton(
+                    icon: Icons.play_arrow,
+                    label: 'Resume Subscription',
+                    color: Colors.green,
+                    onTap: () => _resumeSubscription(subscription.id),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildActionButton(
+                    icon: Icons.cancel,
+                    label: 'Cancel Subscription',
+                    color: Colors.red,
+                    onTap: () => _cancelSubscription(subscription.id),
+                  ),
                 ],
-              ),
-              const SizedBox(height: 24),
-
-              if (subscription.status == SubscriptionStatus.active) ...[
-                _buildActionButton(
-                  icon: Icons.pause,
-                  label: 'Pause Subscription',
-                  color: Colors.orange,
-                  onTap: () => _pauseSubscription(subscription.id),
-                ),
                 const SizedBox(height: 12),
                 _buildActionButton(
-                  icon: Icons.cancel,
-                  label: 'Cancel Subscription',
-                  color: Colors.red,
-                  onTap: () => _cancelSubscription(subscription.id),
+                  icon: Icons.close,
+                  label: 'Close',
+                  color: Colors.grey,
+                  onTap: () => Navigator.pop(context),
                 ),
-              ] else if (subscription.status == SubscriptionStatus.paused) ...[
-                _buildActionButton(
-                  icon: Icons.play_arrow,
-                  label: 'Resume Subscription',
-                  color: Colors.green,
-                  onTap: () => _resumeSubscription(subscription.id),
-                ),
-                const SizedBox(height: 12),
-                _buildActionButton(
-                  icon: Icons.cancel,
-                  label: 'Cancel Subscription',
-                  color: Colors.red,
-                  onTap: () => _cancelSubscription(subscription.id),
-                ),
+                const SizedBox(height: 20),
               ],
-              const SizedBox(height: 12),
-              _buildActionButton(
-                icon: Icons.close,
-                label: 'Close',
-                color: Colors.grey,
-                onTap: () => Navigator.pop(context),
-              ),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         );
       },
@@ -464,15 +478,13 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
-                // FIX: Navigate back to the MainScreen (which defaults to the Home/Browse tab)
-                // This clears any open dialogs or sub-menus and resets the view.
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/main',
                   (route) => false,
                 );
               },
-              icon: const Icon(Icons.search), // Updated icon for browsing
+              icon: const Icon(Icons.search),
               label: const Text('Browse Products'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).primaryColor,

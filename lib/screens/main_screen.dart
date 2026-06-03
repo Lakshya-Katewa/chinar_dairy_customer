@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // NEW: Imported FontAwesome
+
 import '../models/banner.dart';
 import '../providers/auth_provider.dart';
 import '../providers/product_provider.dart';
@@ -69,6 +72,23 @@ class _MainScreenState extends State<MainScreen> {
 
   void _showCart() {
     Navigator.pushNamed(context, '/cart');
+  }
+
+  Future<void> _launchWhatsApp() async {
+    final Uri whatsappUri = Uri.parse('https://wa.me/919622350587');
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not launch WhatsApp. Please check if it is installed.',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   List<Widget> _buildAppBarActions() {
@@ -204,6 +224,18 @@ class _MainScreenState extends State<MainScreen> {
           WalletScreen(),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _launchWhatsApp,
+        backgroundColor: const Color(0xFF25D366),
+        elevation: 4,
+        tooltip: 'Chat with Support on WhatsApp',
+        // UPDATED: Using FontAwesome vector icon for flawless rendering
+        child: const FaIcon(
+          FontAwesomeIcons.whatsapp,
+          color: Colors.white,
+          size: 32,
+        ),
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -263,14 +295,12 @@ class HomeScreenContent extends StatefulWidget {
 class _HomeScreenContentState extends State<HomeScreenContent> {
   final _searchController = TextEditingController();
 
-  // --- FIXED: Cache the stream so it doesn't rebuild and blink when typing ---
   late Stream<QuerySnapshot> _bannersStream;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize the stream ONCE
     _bannersStream =
         FirebaseFirestore.instance
             .collection('banners')
@@ -282,8 +312,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       provider.searchProducts('');
       provider.filterByCategory('All');
     });
-
-    // --- FIXED: Removed the global setState listener that was forcing the whole screen to rebuild ---
   }
 
   @override
@@ -294,7 +322,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   Widget _buildBanners() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _bannersStream, // --- FIXED: Using the cached stream
+      stream: _bannersStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Shimmer.fromColors(
@@ -676,7 +704,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   ),
                 ],
               ),
-              // --- FIXED: Wrap only the TextField in a ValueListenableBuilder ---
               child: ValueListenableBuilder<TextEditingValue>(
                 valueListenable: _searchController,
                 builder: (context, value, child) {
@@ -721,7 +748,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           SliverToBoxAdapter(child: _buildCategoryChips()),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           SliverToBoxAdapter(child: _buildReferralPoster()),
-
           SliverToBoxAdapter(child: _buildSectionHeader('Our Products')),
           Consumer<ProductProvider>(
             builder: (context, productProvider, child) {

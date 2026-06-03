@@ -135,7 +135,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ** NEW: Refer & Earn Poster **
+          // Refer & Earn Poster
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -204,7 +204,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ** NEW: Why Choose Us Poster **
+          // Why Choose Us Poster
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -297,9 +297,10 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               return SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverGrid(
+                  // FIXED GRID DELEGATE
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.7, // Adjusted for better card layout
+                    mainAxisExtent: 340, // Absolute fixed height for each card
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
@@ -338,7 +339,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // ... (rest of the build method is unchanged)
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       drawer: const AppDrawer(),
